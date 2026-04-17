@@ -1,0 +1,36 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* Chethana design tokens */
+  --sage:        #8BAF7C;
+  --sage-light:  #C9DBB9;
+  --sage-dark:   #5A7A4E;
+  --cream:       #FAF8F5;
+  --cream-mid:   #F2EEE6;
+  --ink:         #2E3B2B;
+  --ink-mid:     #5C6B57;
+  --ink-soft:    #9AA895;
+  --gold:        #C4A265;
+  --bg:          #FAF8F5;
+  --radius-card: 18px;
+  --shadow-card: 0 4px 20px rgba(46,59,43,0.08);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html { height: 100%; }
+
+body {
+  font-family: var(--font-dm-sans), 'Sora', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  min-height: 100%;
+  overscroll-behavior: none;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Typography helpers */
+.font-serif { font-family: var(--font-dm-serif), 'Fraunces', Georgia, serif; }
+.font-mono  { font-family: var(--font-jb-mono), 'JetBrains Mono', monospace; }
