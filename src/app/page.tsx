@@ -43,7 +43,8 @@ export default async function HomePage() {
   const completion = profile.profileCompletion ?? 0;
 
   return (
-    <div className="bg-cream min-h-screen px-4 pt-6 pb-24">
+    <div className="max-w-md mx-auto px-4 pt-6 pb-24">
+
 
       {/* ── Greeting ─────────────────────────────────────────── */}
       <div className="flex items-start justify-between mb-6">
