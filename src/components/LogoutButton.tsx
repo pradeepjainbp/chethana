@@ -24,21 +24,7 @@ export default function LogoutButton() {
       onClick={handleLogout}
       disabled={loading}
       title="Sign out"
-      style={{
-        background: 'transparent',
-        border: '1px solid rgba(139,175,124,0.35)',
-        borderRadius: '8px',
-        padding: '5px 10px',
-        fontSize: '0.75rem',
-        color: 'var(--ink-soft)',
-        cursor: loading ? 'not-allowed' : 'pointer',
-        opacity: loading ? 0.6 : 1,
-        display: 'flex',
-        alignItems: 'center',
-        gap: '5px',
-        transition: 'all 0.15s',
-        flexShrink: 0,
-      }}
+      className="flex items-center gap-1.5 shrink-0 bg-transparent border border-sage/35 rounded-lg px-2.5 py-1 text-xs text-ink-soft transition-all duration-150 disabled:opacity-60 disabled:cursor-not-allowed hover:bg-sage-light/20"
     >
       {loading ? '…' : '⎋ Sign out'}
     </button>
