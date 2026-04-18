@@ -60,7 +60,6 @@ export default function OnboardingWizard() {
     knownConditions: [], prakriti: '',
   });
 
-  // Load existing profile on mount so the form is pre-filled on re-visit
   useEffect(() => {
     fetch('/api/profile')
       .then(r => r.json())
@@ -113,7 +112,7 @@ export default function OnboardingWizard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
-        redirect: 'error', // treat middleware redirects as errors, not silent follows
+        redirect: 'error',
       });
       if (res.ok) {
         window.location.href = '/';
@@ -129,43 +128,39 @@ export default function OnboardingWizard() {
   }
 
   if (loading) return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--cream)' }}>
-      <span style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>Loading…</span>
+    <div className="flex items-center justify-center min-h-screen bg-cream">
+      <span className="text-sm text-ink-soft">Loading…</span>
     </div>
   );
 
   return (
-    <div className="min-h-screen flex flex-col"
-         style={{ background: 'linear-gradient(180deg, var(--cream) 0%, var(--cream-mid) 100%)' }}>
+    <div className="min-h-screen flex flex-col bg-gradient-to-b from-cream to-cream-mid">
 
       {/* Progress bar */}
-      <div style={{ height: '3px', background: 'var(--sage-light)' }}>
-        <div style={{
-          height: '100%', background: 'var(--sage)',
-          width: `${((step + 1) / total) * 100}%`,
-          transition: 'width 0.3s ease',
-        }} />
+      <div className="h-[3px] bg-sage-light">
+        <div
+          className="h-full bg-sage transition-[width] duration-300 ease-in-out"
+          style={{ width: `${((step + 1) / total) * 100}%` }}
+        />
       </div>
 
       {/* Header row */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '20px 24px 8px' }}>
+      <div className="flex items-center justify-between px-6 pt-5 pb-2">
         {step > 0
-          ? <button onClick={() => setStep(s => s - 1)} style={backBtnStyle}>← Back</button>
+          ? <button onClick={() => setStep(s => s - 1)} className="bg-none border-none text-ink-soft text-[0.85rem] cursor-pointer p-0">← Back</button>
           : <div />}
-        <span style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', letterSpacing: '0.08em' }}>
+        <span className="text-[0.78rem] text-ink-soft tracking-[0.08em]">
           {step + 1} / {total}
         </span>
       </div>
 
       {/* Content */}
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '8px 24px 32px', maxWidth: '400px', width: '100%', margin: '0 auto' }}>
-        <h2 style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif', fontSize: '1.6rem', color: 'var(--ink)', marginBottom: current.subtitle ? '6px' : '24px' }}>
+      <div className="flex-1 flex flex-col px-6 pt-2 pb-8 max-w-[400px] w-full mx-auto">
+        <h2 className={`font-serif text-[1.6rem] text-ink ${current.subtitle ? 'mb-1.5' : 'mb-6'}`}>
           {current.title}
         </h2>
         {current.subtitle && (
-          <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)', marginBottom: '24px' }}>
-            {current.subtitle}
-          </p>
+          <p className="text-[0.85rem] text-ink-soft mb-6">{current.subtitle}</p>
         )}
 
         {step === 0 && <BasicInfoStep data={data} update={update} />}
@@ -177,31 +172,29 @@ export default function OnboardingWizard() {
 
         {/* Disclaimer notice — shown on first step */}
         {step === 0 && (
-          <p style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', lineHeight: 1.6, marginTop: '20px', padding: '12px', background: 'rgba(139,175,124,0.07)', borderRadius: '10px' }}>
+          <p className="text-[0.72rem] text-ink-soft leading-relaxed mt-5 p-3 bg-sage/10 rounded-[10px]">
             Chethana is an educational wellness tool. It is not a medical device and does not provide medical diagnoses.
             Always consult a qualified healthcare provider before changing your diet, fasting, or medication regimen.{' '}
-            <a href="/disclaimer" style={{ color: 'var(--sage-dark)', textDecoration: 'underline' }}>Full disclaimer</a>
+            <a href="/disclaimer" className="text-sage-dark underline">Full disclaimer</a>
           </p>
         )}
 
         {/* CTA */}
-        <div style={{ marginTop: 'auto', paddingTop: '24px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+        <div className="mt-auto pt-6 flex flex-col gap-2.5">
           {error && (
-            <p style={{ fontSize: '0.8rem', color: '#c0392b', textAlign: 'center' }}>{error}</p>
+            <p className="text-sm text-[#c0392b] text-center">{error}</p>
           )}
           <button onClick={handleNext} disabled={!current.valid || saving}
-            style={{
-              width: '100%', padding: '14px 20px', borderRadius: '16px', border: 'none',
-              background: current.valid ? 'var(--sage)' : 'var(--sage-light)',
-              color: current.valid ? '#ffffff' : 'var(--ink-soft)',
-              fontSize: '0.95rem', fontWeight: 500, cursor: current.valid ? 'pointer' : 'not-allowed',
-              transition: 'background 0.2s',
-            }}>
+            className={`w-full px-5 py-3.5 rounded-2xl border-none text-[0.95rem] font-medium transition-colors duration-200 ${
+              current.valid
+                ? 'bg-sage text-white cursor-pointer'
+                : 'bg-sage-light text-ink-soft cursor-not-allowed'
+            }`}>
             {saving ? 'Saving…' : isLast ? 'Finish' : 'Next →'}
           </button>
           {isLast && (
             <button onClick={() => { window.location.href = '/'; }}
-              style={{ background: 'none', border: 'none', color: 'var(--ink-soft)', fontSize: '0.82rem', cursor: 'pointer' }}>
+              className="bg-none border-none text-ink-soft text-[0.82rem] cursor-pointer">
               Skip for now
             </button>
           )}
@@ -215,20 +208,20 @@ export default function OnboardingWizard() {
 
 function BasicInfoStep({ data, update }: StepProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <Field label="Age" style={{ flex: 1 }}>
+    <div className="flex flex-col gap-5">
+      <div className="flex gap-3">
+        <Field label="Age" className="flex-1">
           <NumInput value={data.age} onChange={v => update({ age: v })} placeholder="30" min={10} max={100} />
         </Field>
-        <Field label="Sex" style={{ flex: 2 }}>
+        <Field label="Sex" className="flex-[2]">
           <SegControl options={['Male', 'Female']} value={data.sex} onChange={v => update({ sex: v })} />
         </Field>
       </div>
-      <div style={{ display: 'flex', gap: '12px' }}>
-        <Field label="Height (cm)" style={{ flex: 1 }}>
+      <div className="flex gap-3">
+        <Field label="Height (cm)" className="flex-1">
           <NumInput value={data.heightCm} onChange={v => update({ heightCm: v })} placeholder="165" min={100} max={220} />
         </Field>
-        <Field label="Weight (kg)" style={{ flex: 1 }}>
+        <Field label="Weight (kg)" className="flex-1">
           <NumInput value={data.weightKg} onChange={v => update({ weightKg: v })} placeholder="70" min={30} max={200} />
         </Field>
       </div>
@@ -244,7 +237,7 @@ function GoalsStep({ data, update }: StepProps) {
     update({ goals: data.goals.includes(goal) ? data.goals.filter(g => g !== goal) : [...data.goals, goal] });
   }
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+    <div className="flex flex-wrap gap-2.5">
       {GOALS.map(g => <Chip key={g} label={g} selected={data.goals.includes(g)} onToggle={() => toggle(g)} />)}
     </div>
   );
@@ -262,9 +255,9 @@ function DietStep({ data, update }: StepProps) {
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div className="flex flex-col gap-6">
       <Field label="Dietary preference">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {['Vegetarian', 'Eggetarian', 'Non-vegetarian'].map(opt => (
             <RadioCard key={opt} label={opt} selected={data.dietaryPreference === opt}
               onSelect={() => update({ dietaryPreference: opt, dietaryExclusions: [] })} />
@@ -274,7 +267,7 @@ function DietStep({ data, update }: StepProps) {
 
       {isNonVeg && (
         <Field label="Exclude any?" hint="Optional">
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          <div className="flex flex-wrap gap-2">
             {['Beef', 'Pork', 'Seafood', 'None'].map(e => (
               <Chip key={e} label={e}
                 selected={e === 'None' ? data.dietaryExclusions.length === 0 : data.dietaryExclusions.includes(e)}
@@ -294,9 +287,9 @@ function DietStep({ data, update }: StepProps) {
 
 function ActivitySleepStep({ data, update }: StepProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '28px' }}>
+    <div className="flex flex-col gap-7">
       <Field label="Activity level">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+        <div className="flex flex-col gap-2">
           {ACTIVITIES.map(a => (
             <RadioCard key={a.value} label={a.value} hint={a.hint}
               selected={data.activityLevel === a.value}
@@ -308,8 +301,8 @@ function ActivitySleepStep({ data, update }: StepProps) {
       <Field label={`Average sleep · ${data.avgSleepHours} hours / night`}>
         <input type="range" min={4} max={10} step={0.5} value={data.avgSleepHours}
           onChange={e => update({ avgSleepHours: e.target.value })}
-          style={{ width: '100%', accentColor: 'var(--sage)', cursor: 'pointer', marginBottom: '4px' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--ink-soft)' }}>
+          className="w-full cursor-pointer mb-1 [accent-color:var(--sage)]" />
+        <div className="flex justify-between text-[0.72rem] text-ink-soft">
           <span>4 hrs</span><span>10 hrs</span>
         </div>
       </Field>
@@ -326,7 +319,7 @@ function ConditionsStep({ data, update }: StepProps) {
     update({ knownConditions: next });
   }
   return (
-    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+    <div className="flex flex-wrap gap-2.5">
       {CONDITIONS.map(c => <Chip key={c} label={c} selected={data.knownConditions.includes(c)} onToggle={() => toggle(c)} />)}
     </div>
   );
@@ -334,12 +327,12 @@ function ConditionsStep({ data, update }: StepProps) {
 
 function PrakritiStep({ data, update }: StepProps) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <p style={{ fontSize: '0.85rem', color: 'var(--ink-soft)', lineHeight: 1.65 }}>
+    <div className="flex flex-col gap-4">
+      <p className="text-[0.85rem] text-ink-soft leading-relaxed">
         If you know your Ayurvedic Prakriti (body constitution), add it here.
         If not, ask your Ayurvedic doctor on your next visit — or simply skip.
       </p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+      <div className="flex flex-col gap-2">
         {PRAKRITI_OPTIONS.map(o => (
           <RadioCard key={o.value} label={o.value} hint={o.hint}
             selected={data.prakriti === o.value}
@@ -354,13 +347,13 @@ function PrakritiStep({ data, update }: StepProps) {
 
 type StepProps = { data: FormData; update: (p: Partial<FormData>) => void };
 
-function Field({ label, hint, children, style }: { label: string; hint?: string; children: React.ReactNode; style?: React.CSSProperties }) {
+function Field({ label, hint, children, className }: { label: string; hint?: string; children: React.ReactNode; className?: string }) {
   return (
-    <div style={style}>
-      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-mid)', marginBottom: hint ? '4px' : '8px', letterSpacing: '0.03em' }}>
+    <div className={className}>
+      <div className={`text-[0.8rem] font-semibold text-ink-mid tracking-wide ${hint ? 'mb-1' : 'mb-2'}`}>
         {label}
       </div>
-      {hint && <div style={{ fontSize: '0.74rem', color: 'var(--ink-soft)', marginBottom: '8px', lineHeight: 1.5 }}>{hint}</div>}
+      {hint && <div className="text-[0.74rem] text-ink-soft mb-2 leading-snug">{hint}</div>}
       {children}
     </div>
   );
@@ -371,22 +364,20 @@ function NumInput({ value, onChange, placeholder, min, max }: { value: string; o
     <input type="number" inputMode="numeric"
       value={value} onChange={e => onChange(e.target.value)}
       placeholder={placeholder} min={min} max={max}
-      style={{ width: '100%', padding: '10px 12px', background: '#ffffff', border: '1.5px solid #E8EFE1', borderRadius: '12px', fontSize: '1rem', color: 'var(--ink)', outline: 'none' }} />
+      className="w-full px-3 py-2.5 bg-white border-[1.5px] border-[#E8EFE1] rounded-xl text-base text-ink outline-none" />
   );
 }
 
 function SegControl({ options, value, onChange }: { options: string[]; value: string; onChange: (v: string) => void }) {
   return (
-    <div style={{ display: 'flex', background: '#EDEEE9', borderRadius: '10px', padding: '3px', gap: '2px' }}>
+    <div className="flex bg-[#EDEEE9] rounded-[10px] p-[3px] gap-[2px]">
       {options.map(o => (
         <button key={o} onClick={() => onChange(o)}
-          style={{
-            flex: 1, padding: '7px 2px', borderRadius: '8px', border: 'none', cursor: 'pointer',
-            fontSize: '0.75rem', fontWeight: value === o ? 600 : 400,
-            background: value === o ? '#ffffff' : 'transparent',
-            color: value === o ? 'var(--ink)' : 'var(--ink-soft)',
-            transition: 'all 0.15s', boxShadow: value === o ? '0 1px 4px rgba(0,0,0,0.1)' : 'none',
-          }}>
+          className={`flex-1 px-0.5 py-[7px] rounded-lg border-none cursor-pointer text-xs transition-all duration-150 ${
+            value === o
+              ? 'font-semibold bg-white text-ink shadow-[0_1px_4px_rgba(0,0,0,0.1)]'
+              : 'font-normal bg-transparent text-ink-soft'
+          }`}>
           {o}
         </button>
       ))}
@@ -397,14 +388,13 @@ function SegControl({ options, value, onChange }: { options: string[]; value: st
 function RadioCard({ label, hint, selected, onSelect }: { label: string; hint?: string; selected: boolean; onSelect: () => void }) {
   return (
     <button onClick={onSelect}
-      style={{
-        width: '100%', padding: '11px 14px', borderRadius: '12px', border: 'none',
-        outline: `1.5px solid ${selected ? 'var(--sage)' : '#E8EFE1'}`,
-        background: selected ? 'rgba(139,175,124,0.09)' : '#ffffff',
-        cursor: 'pointer', textAlign: 'left', transition: 'all 0.15s',
-      }}>
-      <div style={{ fontSize: '0.9rem', fontWeight: 500, color: 'var(--ink)' }}>{label}</div>
-      {hint && <div style={{ fontSize: '0.75rem', color: 'var(--ink-soft)', marginTop: '2px' }}>{hint}</div>}
+      className={`w-full px-3.5 py-[11px] rounded-xl border-none cursor-pointer text-left transition-all duration-150 ${
+        selected
+          ? 'outline outline-[1.5px] outline-sage bg-sage/10'
+          : 'outline outline-[1.5px] outline-[#E8EFE1] bg-white'
+      }`}>
+      <div className="text-[0.9rem] font-medium text-ink">{label}</div>
+      {hint && <div className="text-[0.75rem] text-ink-soft mt-0.5">{hint}</div>}
     </button>
   );
 }
@@ -412,14 +402,11 @@ function RadioCard({ label, hint, selected, onSelect }: { label: string; hint?: 
 function Chip({ label, selected, onToggle }: { label: string; selected: boolean; onToggle: () => void }) {
   return (
     <button onClick={onToggle}
-      style={{
-        padding: '8px 14px', borderRadius: '100px',
-        border: `1.5px solid ${selected ? 'var(--sage)' : '#E8EFE1'}`,
-        background: selected ? 'var(--sage)' : '#ffffff',
-        color: selected ? '#ffffff' : 'var(--ink-mid)',
-        fontSize: '0.82rem', fontWeight: selected ? 500 : 400,
-        cursor: 'pointer', transition: 'all 0.15s',
-      }}>
+      className={`px-3.5 py-2 rounded-full border-[1.5px] cursor-pointer text-[0.82rem] transition-all duration-150 ${
+        selected
+          ? 'border-sage bg-sage text-white font-medium'
+          : 'border-[#E8EFE1] bg-white text-ink-mid font-normal'
+      }`}>
       {label}
     </button>
   );
@@ -427,24 +414,15 @@ function Chip({ label, selected, onToggle }: { label: string; selected: boolean;
 
 function Toggle({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+    <div className="flex items-center gap-3">
       <button onClick={() => onChange(!value)}
-        style={{
-          width: '48px', height: '28px', borderRadius: '100px', border: 'none', cursor: 'pointer',
-          background: value ? 'var(--sage)' : '#D5D9D2', position: 'relative', transition: 'background 0.2s', flexShrink: 0,
-        }}>
-        <div style={{
-          width: '22px', height: '22px', borderRadius: '50%', background: '#ffffff',
-          position: 'absolute', top: '3px', left: value ? '23px' : '3px',
-          transition: 'left 0.2s', boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-        }} />
+        className={`w-12 h-7 rounded-full border-none cursor-pointer relative transition-colors duration-200 shrink-0 ${value ? 'bg-sage' : 'bg-[#D5D9D2]'}`}>
+        <div
+          className="w-[22px] h-[22px] rounded-full bg-white absolute top-[3px] transition-[left] duration-200 shadow-[0_1px_3px_rgba(0,0,0,0.2)]"
+          style={{ left: value ? '23px' : '3px' }}
+        />
       </button>
-      <span style={{ fontSize: '0.9rem', color: 'var(--ink-mid)' }}>{label}</span>
+      <span className="text-[0.9rem] text-ink-mid">{label}</span>
     </div>
   );
 }
-
-const backBtnStyle: React.CSSProperties = {
-  background: 'none', border: 'none', color: 'var(--ink-soft)',
-  fontSize: '0.85rem', cursor: 'pointer', padding: '0',
-};
