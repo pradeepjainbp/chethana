@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 // ── Types ────────────────────────────────────────────────────────────────────
@@ -54,12 +54,40 @@ export default function OnboardingWizard() {
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
   const [data, setData] = useState<FormData>({
     age: '', sex: '', heightCm: '', weightKg: '', waistCm: '',
     goals: [], dietaryPreference: '', dietaryExclusions: [],
     jainDiet: false, activityLevel: '', avgSleepHours: '7',
     knownConditions: [], prakriti: '',
   });
+
+  // Load existing profile on mount so the form is pre-filled on re-visit
+  useEffect(() => {
+    fetch('/api/profile')
+      .then(r => r.json())
+      .then(({ profile }: { profile: Record<string, unknown> | null }) => {
+        if (profile) {
+          setData({
+            age:                String(profile.age ?? ''),
+            sex:                String(profile.sex ?? ''),
+            heightCm:           String(profile.heightCm ?? ''),
+            weightKg:           String(profile.weightKg ?? ''),
+            waistCm:            String(profile.waistCm ?? ''),
+            goals:              (profile.goals as string[]) ?? [],
+            dietaryPreference:  String(profile.dietaryPreference ?? ''),
+            dietaryExclusions:  (profile.dietaryExclusions as string[]) ?? [],
+            jainDiet:           Boolean(profile.jainDiet),
+            activityLevel:      String(profile.activityLevel ?? ''),
+            avgSleepHours:      String(profile.avgSleepHours ?? '7'),
+            knownConditions:    (profile.knownConditions as string[]) ?? [],
+            prakriti:           String(profile.prakriti ?? ''),
+          });
+        }
+      })
+      .catch(() => {/* use defaults */})
+      .finally(() => setLoading(false));
+  }, []);
 
   function update(partial: Partial<FormData>) {
     setData(d => ({ ...d, ...partial }));
@@ -89,7 +117,8 @@ export default function OnboardingWizard() {
         body: JSON.stringify(data),
       });
       if (res.ok) {
-        router.push('/');
+        // Full page navigation so the server re-reads the session cookie correctly
+        window.location.href = '/';
       } else {
         const body = await res.json().catch(() => ({}));
         setError(body.error ?? 'Something went wrong. Please try again.');
@@ -100,6 +129,12 @@ export default function OnboardingWizard() {
       setSaving(false);
     }
   }
+
+  if (loading) return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', background: 'var(--cream)' }}>
+      <span style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>Loading…</span>
+    </div>
+  );
 
   return (
     <div className="min-h-screen flex flex-col"
@@ -167,7 +202,7 @@ export default function OnboardingWizard() {
             {saving ? 'Saving…' : isLast ? 'Finish' : 'Next →'}
           </button>
           {isLast && (
-            <button onClick={() => router.push('/')}
+            <button onClick={() => { window.location.href = '/'; }}
               style={{ background: 'none', border: 'none', color: 'var(--ink-soft)', fontSize: '0.82rem', cursor: 'pointer' }}>
               Skip for now
             </button>
@@ -188,7 +223,7 @@ function BasicInfoStep({ data, update }: StepProps) {
           <NumInput value={data.age} onChange={v => update({ age: v })} placeholder="30" min={10} max={100} />
         </Field>
         <Field label="Sex" style={{ flex: 2 }}>
-          <SegControl options={['Male', 'Female', 'Other']} value={data.sex} onChange={v => update({ sex: v })} />
+          <SegControl options={['Male', 'Female']} value={data.sex} onChange={v => update({ sex: v })} />
         </Field>
       </div>
       <div style={{ display: 'flex', gap: '12px' }}>
