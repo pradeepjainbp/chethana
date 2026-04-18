@@ -115,9 +115,9 @@ export default function OnboardingWizard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
+        redirect: 'error', // treat middleware redirects as errors, not silent follows
       });
       if (res.ok) {
-        // Full page navigation so the server re-reads the session cookie correctly
         window.location.href = '/';
       } else {
         const body = await res.json().catch(() => ({}));
