@@ -29,54 +29,34 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-6"
-         style={{ background: 'linear-gradient(180deg, var(--cream) 0%, var(--cream-mid) 100%)' }}>
+    <div className="min-h-screen flex items-center justify-center px-6 bg-gradient-to-b from-cream to-cream-mid">
       <div className="flex flex-col items-center gap-6 w-full max-w-xs">
 
-        <div style={{ fontSize: '3.5rem', animation: 'breathe 6s ease-in-out infinite' }}>🌿</div>
+        <div className="text-[3.5rem] animate-[breathe_6s_ease-in-out_infinite]">🌿</div>
 
         <div className="text-center">
-          <h1 style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif', fontSize: '2rem', color: 'var(--ink)' }}>
-            Chethana
-          </h1>
-          <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', letterSpacing: '0.15em', textTransform: 'uppercase', marginTop: '4px' }}>
-            ಚೇತನ
-          </p>
+          <h1 className="font-serif text-[2rem] text-ink">Chethana</h1>
+          <p className="text-xs text-ink-soft tracking-[0.15em] uppercase mt-1">ಚೇತನ</p>
         </div>
 
-        <p style={{ fontSize: '0.9rem', color: 'var(--ink-mid)', textAlign: 'center', lineHeight: 1.6 }}>
+        <p className="text-sm text-ink-mid text-center leading-relaxed">
           Your personal health companion for fasting, breath, and gut wisdom.
         </p>
 
         <button
           onClick={signInWithGoogle}
           disabled={loading}
-          className="w-full flex items-center justify-center gap-3 rounded-2xl border transition-all"
-          style={{
-            padding: '14px 20px',
-            background: '#ffffff',
-            border: '1.5px solid #E8EFE1',
-            color: 'var(--ink)',
-            fontSize: '0.95rem',
-            fontWeight: 500,
-            cursor: loading ? 'not-allowed' : 'pointer',
-            opacity: loading ? 0.7 : 1,
-            boxShadow: '0 2px 12px rgba(46,59,43,0.08)',
-          }}
-          onMouseOver={e => (e.currentTarget.style.borderColor = 'var(--sage)')}
-          onMouseOut={e => (e.currentTarget.style.borderColor = '#E8EFE1')}
+          className="w-full flex items-center justify-center gap-3 rounded-2xl bg-white border-[1.5px] border-[#E8EFE1] hover:border-sage px-5 py-3.5 text-[0.95rem] font-medium text-ink shadow-card transition-all disabled:opacity-70 disabled:cursor-not-allowed"
         >
           <GoogleIcon />
           {loading ? 'Redirecting…' : 'Continue with Google'}
         </button>
 
         {error && (
-          <p style={{ fontSize: '0.78rem', color: '#c0392b', textAlign: 'center', lineHeight: 1.5 }}>
-            {error}
-          </p>
+          <p className="text-[0.78rem] text-[#c0392b] text-center leading-relaxed">{error}</p>
         )}
 
-        <p style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', textAlign: 'center', lineHeight: 1.6 }}>
+        <p className="text-[0.72rem] text-ink-soft text-center leading-relaxed">
           Personal use only · Your data stays yours
         </p>
       </div>
