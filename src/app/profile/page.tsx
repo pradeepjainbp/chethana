@@ -28,61 +28,46 @@ export default async function ProfilePage() {
   ];
 
   return (
-    <div style={{ background: 'var(--cream)', minHeight: '100vh', padding: '24px 16px 96px' }}>
+    <div className="bg-cream min-h-screen px-4 pt-6 pb-24 max-w-md mx-auto">
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '24px' }}>
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 style={{
-            fontFamily: 'var(--font-dm-serif), Georgia, serif',
-            fontSize: '1.55rem', color: 'var(--ink)', lineHeight: 1.2,
-          }}>
+          <h1 className="font-serif text-[1.55rem] text-ink leading-tight">
             {name || 'Your Profile'}
           </h1>
-          <p style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginTop: '4px' }}>{email}</p>
+          <p className="text-[0.78rem] text-ink-soft mt-1">{email}</p>
         </div>
         <LogoutButton />
       </div>
 
       {/* Completion bar */}
-      <div style={{
-        background: '#fff', borderRadius: 'var(--radius-card)',
-        padding: '14px 16px', boxShadow: 'var(--shadow-card)', marginBottom: '16px',
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--ink-mid)', letterSpacing: '0.06em' }}>PROFILE COMPLETION</span>
-          <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--sage-dark)' }}>{completion}%</span>
+      <div className="bg-white rounded-card px-4 py-3.5 shadow-card mb-4">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-[0.72rem] font-semibold text-ink-mid tracking-wider">PROFILE COMPLETION</span>
+          <span className="text-[0.82rem] font-bold text-sage-dark">{completion}%</span>
         </div>
-        <div style={{ height: '5px', background: 'var(--sage-light)', borderRadius: '100px', overflow: 'hidden' }}>
-          <div style={{ height: '100%', width: `${completion}%`, background: 'var(--sage)', borderRadius: '100px', transition: 'width 0.5s ease' }} />
+        <div className="h-[5px] bg-sage-light rounded-full overflow-hidden">
+          <div
+            className="h-full bg-sage rounded-full transition-[width] duration-500 ease-in-out"
+            style={{ width: `${completion}%` }}
+          />
         </div>
       </div>
 
       {/* Stats grid */}
-      <div style={{
-        background: '#fff', borderRadius: 'var(--radius-card)',
-        boxShadow: 'var(--shadow-card)', marginBottom: '16px', overflow: 'hidden',
-      }}>
+      <div className="bg-white rounded-card shadow-card mb-4 overflow-hidden">
         {rows.map(({ label, value }, i) => (
-          <div key={label} style={{
-            display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-            padding: '13px 16px',
-            borderBottom: i < rows.length - 1 ? '1px solid var(--sage-light)' : 'none',
-          }}>
-            <span style={{ fontSize: '0.82rem', color: 'var(--ink-soft)' }}>{label}</span>
-            <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink-mid)' }}>{value}</span>
+          <div key={label} className={`flex justify-between items-center px-4 py-[13px] ${i < rows.length - 1 ? 'border-b border-sage-light' : ''}`}>
+            <span className="text-[0.82rem] text-ink-soft">{label}</span>
+            <span className="text-[0.82rem] font-semibold text-ink-mid">{value}</span>
           </div>
         ))}
       </div>
 
       {/* Edit link */}
-      <Link href="/onboarding/basic-info" style={{
-        display: 'block', textAlign: 'center',
-        background: 'var(--sage)', color: '#fff',
-        borderRadius: 'var(--radius-card)', padding: '13px',
-        fontSize: '0.88rem', fontWeight: 600, textDecoration: 'none',
-        boxShadow: 'var(--shadow-card)',
-      }}>
+      <Link href="/onboarding/basic-info"
+        className="block text-center bg-sage text-white rounded-card py-[13px] text-[0.88rem] font-semibold no-underline shadow-card">
         Edit Profile
       </Link>
     </div>
