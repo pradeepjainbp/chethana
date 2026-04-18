@@ -117,7 +117,7 @@ export default async function HomePage() {
       <CompletionBar completion={completion} />
 
       {/* ── Vaidya's Note (P1.17) ────────────────────────────── */}
-      <VaidyaNote />
+      <VaidyaNote userId={session.user.id} />
     </div>
   );
 }
@@ -202,8 +202,23 @@ const VAIDYA_NOTES = [
   'Stress raises cortisol, cortisol raises blood sugar, elevated sugar raises insulin. Five minutes of slow nasal breathing breaks the cycle.',
 ];
 
-function VaidyaNote() {
-  const note = VAIDYA_NOTES[new Date().getDay() % VAIDYA_NOTES.length];
+function hashString(s: string) {
+  let h = 2166136261;
+  for (let i = 0; i < s.length; i++) {
+    h ^= s.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  return h >>> 0;
+}
+
+function dayOfYear(d: Date) {
+  const start = Date.UTC(d.getUTCFullYear(), 0, 0);
+  return Math.floor((d.getTime() - start) / 86_400_000);
+}
+
+function VaidyaNote({ userId }: { userId: string }) {
+  const idx = (hashString(userId) + dayOfYear(new Date())) % VAIDYA_NOTES.length;
+  const note = VAIDYA_NOTES[idx];
   return (
     <div className="bg-sage/10 border border-sage-light rounded-card p-4 mb-3">
       <div className="text-[0.65rem] font-bold tracking-[0.12em] text-sage-dark mb-2.5">
