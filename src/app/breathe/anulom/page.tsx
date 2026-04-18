@@ -31,8 +31,8 @@ export default function AnulomPage() {
   const [cycleIdx, setCycleIdx] = useState(0);
   const [completedCycles, setCompletedCycles] = useState(0);
 
-  const inhaleDur = store.inhaleCounts;   // default 4s
-  const exhaleDur = store.exhaleCounts;   // default 8s
+  const inhaleDur = store.inhaleCounts;
+  const exhaleDur = store.exhaleCounts;
 
   function phaseDuration(p: AnulomPhase) {
     return p.startsWith('inhale') ? inhaleDur : exhaleDur;
@@ -49,7 +49,6 @@ export default function AnulomPage() {
     }
   }, []); // eslint-disable-line
 
-  // Phase ticker
   useEffect(() => {
     if (store.phase === 'idle' || store.phase === 'complete') return;
 
@@ -58,13 +57,11 @@ export default function AnulomPage() {
       const dur = phaseDuration(s.phase as AnulomPhase);
 
       if (s.phaseElapsed + 1 >= dur) {
-        // Advance to next phase in cycle
         const nextIdx = (cycleIdx + 1) % CYCLE.length;
         const nextPhase = CYCLE[nextIdx];
         setCycleIdx(nextIdx);
 
         if (nextIdx === 0) {
-          // Completed one full cycle
           const done = completedCycles + 1;
           setCompletedCycles(done);
           if (done >= s.anulomRounds) {
@@ -96,7 +93,6 @@ export default function AnulomPage() {
     store.completeSession();
   }
 
-  // Post-session
   if (store.phase === 'complete') {
     return <PostSession completedCycles={completedCycles} />;
   }
@@ -105,14 +101,10 @@ export default function AnulomPage() {
   const dur = phaseDuration(currentPhase);
 
   return (
-    <div style={{
-      background: 'linear-gradient(180deg, #EFF6EA 0%, var(--cream-mid) 100%)',
-      minHeight: '100vh', display: 'flex', flexDirection: 'column',
-      alignItems: 'center', justifyContent: 'center', padding: '20px 24px',
-    }}>
+    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-b from-[#EFF6EA] to-cream-mid">
       {/* Cycle counter */}
-      <div style={{ textAlign: 'center', marginBottom: '28px' }}>
-        <p style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--ink-soft)' }}>
+      <div className="text-center mb-7">
+        <p className="text-[0.72rem] font-semibold tracking-[0.12em] text-ink-soft">
           CYCLE {completedCycles + 1} / {store.anulomRounds}
         </p>
       </div>
@@ -120,17 +112,17 @@ export default function AnulomPage() {
       <BreathCircle phase={currentPhase} elapsed={store.phaseElapsed} duration={dur} />
 
       {/* Phase info */}
-      <div style={{ textAlign: 'center', marginTop: '28px' }}>
-        <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '6px' }}>
+      <div className="text-center mt-7">
+        <p className="text-[0.9rem] font-semibold text-ink mb-1.5">
           {PHASE_LABEL[currentPhase]}
         </p>
-        <p style={{ fontSize: '0.75rem', color: 'var(--ink-soft)' }}>
+        <p className="text-[0.75rem] text-ink-soft">
           {NOSTRIL_HINT[currentPhase]}
         </p>
       </div>
 
       <button onClick={handleStop}
-        style={{ marginTop: '48px', background: 'none', border: '1px solid #D5D9D2', borderRadius: '12px', padding: '10px 24px', color: 'var(--ink-soft)', fontSize: '0.8rem', cursor: 'pointer' }}>
+        className="mt-12 bg-transparent border border-[#D5D9D2] rounded-xl py-2.5 px-6 text-ink-soft text-[0.8rem] cursor-pointer">
         End session
       </button>
     </div>
@@ -168,32 +160,36 @@ function PostSession({ completedCycles }: { completedCycles: number }) {
 
   if (saved) {
     return (
-      <div style={{ background: 'var(--cream)', minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 24px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '16px' }}>✓</div>
-        <h2 style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif', fontSize: '1.5rem', color: 'var(--ink)', marginBottom: '32px' }}>Saved.</h2>
-        <button onClick={exit} style={{ padding: '14px 40px', borderRadius: '16px', border: 'none', background: 'var(--sage)', color: '#fff', fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer' }}>Done</button>
+      <div className="bg-cream min-h-screen flex flex-col items-center justify-center px-6 py-10">
+        <div className="text-[3rem] mb-4">✓</div>
+        <h2 className="font-serif text-[1.5rem] text-ink mb-8">Saved.</h2>
+        <button onClick={exit}
+          className="py-3.5 px-10 rounded-2xl border-none bg-sage text-white text-[0.95rem] font-semibold cursor-pointer">
+          Done
+        </button>
       </div>
     );
   }
 
   return (
-    <div style={{ background: 'var(--cream)', minHeight: '100vh', display: 'flex', flexDirection: 'column', padding: '48px 24px 80px' }}>
-      <h2 style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif', fontSize: '1.5rem', color: 'var(--ink)', marginBottom: '6px' }}>
-        Well done.
-      </h2>
-      <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', marginBottom: '32px' }}>
+    <div className="bg-cream min-h-screen flex flex-col px-6 pt-12 pb-20">
+      <h2 className="font-serif text-[1.5rem] text-ink mb-1.5">Well done.</h2>
+      <p className="text-[0.82rem] text-ink-soft mb-8">
         {completedCycles} cycles · {Math.round(store.totalDuration / 60)} min
       </p>
-      <p style={{ fontSize: '0.88rem', color: 'var(--ink-mid)', marginBottom: '16px', fontWeight: 500 }}>How do you feel?</p>
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '32px' }}>
+      <p className="text-[0.88rem] text-ink-mid mb-4 font-medium">How do you feel?</p>
+      <div className="flex gap-2.5 mb-8">
         {(['calm', 'neutral', 'energized'] as const).map(f => (
           <button key={f} onClick={() => saveAndExit(f)} disabled={saving}
-            style={{ flex: 1, padding: '12px 6px', borderRadius: '14px', border: '1.5px solid #E8EFE1', background: '#ffffff', color: 'var(--ink-mid)', fontSize: '0.82rem', fontWeight: 500, cursor: saving ? 'not-allowed' : 'pointer', textTransform: 'capitalize' }}>
+            className={`flex-1 py-3 px-1.5 rounded-[14px] border-[1.5px] border-[#E8EFE1] bg-white text-ink-mid text-[0.82rem] font-medium capitalize ${saving ? 'cursor-not-allowed' : 'cursor-pointer'}`}>
             {f === 'calm' ? '😌 Calm' : f === 'neutral' ? '😐 Neutral' : '⚡ Energized'}
           </button>
         ))}
       </div>
-      <button onClick={exit} style={{ background: 'none', border: 'none', color: 'var(--ink-soft)', fontSize: '0.82rem', cursor: 'pointer' }}>Skip and exit</button>
+      <button onClick={exit}
+        className="bg-transparent border-none text-ink-soft text-[0.82rem] cursor-pointer">
+        Skip and exit
+      </button>
     </div>
   );
 }

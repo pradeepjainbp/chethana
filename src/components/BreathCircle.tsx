@@ -25,45 +25,36 @@ export default function BreathCircle({ phase, elapsed, duration }: Props) {
   const style = PHASE_STYLE[phase] ?? PHASE_STYLE.idle;
   const progress = duration > 0 ? Math.min(elapsed / duration, 1) : 0;
 
-  // Smooth scale: lerp between base scale and target
   const isInhale = phase === 'inhale-left' || phase === 'inhale-right' || phase === 'recovery';
   const isExhale = phase === 'exhale-left' || phase === 'exhale-right';
   let scale = style.scale;
-  if (isInhale)  scale = 0.55 + progress * 0.4;   // 0.55 → 0.95
-  if (isExhale)  scale = 0.95 - progress * 0.4;   // 0.95 → 0.55
+  if (isInhale)  scale = 0.55 + progress * 0.4;
+  if (isExhale)  scale = 0.95 - progress * 0.4;
 
   const SIZE = 220;
 
   return (
-    <div style={{ position: 'relative', width: SIZE, height: SIZE, flexShrink: 0 }}>
+    <div className="relative shrink-0" style={{ width: SIZE, height: SIZE }}>
       {/* Outer glow ring */}
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        background: style.color,
-        opacity: 0.18,
-        transform: `scale(${scale + 0.18})`,
-        transition: 'transform 0.6s ease, background 0.6s ease',
-      }} />
+      <div
+        className="absolute inset-0 rounded-full opacity-[0.18] transition-[transform,background] duration-[600ms] ease-in-out"
+        style={{ background: style.color, transform: `scale(${scale + 0.18})` }}
+      />
 
       {/* Main circle */}
-      <div style={{
-        position: 'absolute', inset: 0, borderRadius: '50%',
-        background: style.color,
-        transform: `scale(${scale})`,
-        transition: 'transform 0.6s ease, background 0.6s ease',
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        boxShadow: `0 8px 40px ${style.color}66`,
-        animation: style.pulse ? 'subtlePulse 2s ease-in-out infinite' : 'none',
-      }}>
-        <span style={{
-          fontSize: '0.85rem', fontWeight: 600, color: '#2E3B2B',
-          letterSpacing: '0.08em', textTransform: 'uppercase',
-        }}>
+      <div
+        className={`absolute inset-0 rounded-full flex flex-col items-center justify-center transition-[transform,background] duration-[600ms] ease-in-out ${style.pulse ? 'animate-[subtlePulse_2s_ease-in-out_infinite]' : ''}`}
+        style={{
+          background: style.color,
+          transform: `scale(${scale})`,
+          boxShadow: `0 8px 40px ${style.color}66`,
+        }}
+      >
+        <span className="text-[0.85rem] font-semibold text-ink tracking-[0.08em] uppercase">
           {style.label}
         </span>
         {duration > 0 && (
-          <span style={{ fontSize: '1.4rem', fontWeight: 700, color: '#2E3B2B', marginTop: '2px' }}>
+          <span className="text-[1.4rem] font-bold text-ink mt-0.5">
             {Math.max(0, duration - elapsed)}
           </span>
         )}
@@ -72,7 +63,7 @@ export default function BreathCircle({ phase, elapsed, duration }: Props) {
       {/* Arc progress ring (SVG) */}
       {duration > 0 && (
         <svg
-          style={{ position: 'absolute', inset: 0, transform: 'rotate(-90deg)' }}
+          className="absolute inset-0 -rotate-90"
           width={SIZE} height={SIZE}
         >
           <circle
@@ -85,7 +76,7 @@ export default function BreathCircle({ phase, elapsed, duration }: Props) {
             strokeDasharray={`${2 * Math.PI * (SIZE / 2 - 4)}`}
             strokeDashoffset={`${2 * Math.PI * (SIZE / 2 - 4) * (1 - progress)}`}
             strokeLinecap="round"
-            style={{ transition: 'stroke-dashoffset 1s linear' }}
+            className="transition-[stroke-dashoffset] duration-1000 ease-linear"
           />
         </svg>
       )}

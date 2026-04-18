@@ -24,45 +24,37 @@ export default function BreathePage() {
   }
 
   return (
-    <div style={{ background: 'var(--cream)', minHeight: '100vh', padding: '28px 20px 80px' }}>
-      <h1 style={{ fontFamily: 'var(--font-dm-serif), Georgia, serif', fontSize: '1.6rem', color: 'var(--ink)', marginBottom: '6px' }}>
-        Breathe
-      </h1>
-      <p style={{ fontSize: '0.82rem', color: 'var(--ink-soft)', marginBottom: '28px' }}>
-        Choose a technique and begin.
-      </p>
+    <div className="bg-cream min-h-screen px-5 pt-7 pb-20">
+      <h1 className="font-serif text-[1.6rem] text-ink mb-1.5">Breathe</h1>
+      <p className="text-[0.82rem] text-ink-soft mb-7">Choose a technique and begin.</p>
 
       {/* Technique tabs */}
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '24px' }}>
+      <div className="flex gap-2.5 mb-6">
         {(['wimhof', 'anulom'] as Technique[]).map(t => (
           <button key={t} onClick={() => setTech(t)}
-            style={{
-              flex: 1, padding: '12px', borderRadius: '14px', border: 'none', cursor: 'pointer',
-              background: tech === t ? 'var(--sage)' : '#ffffff',
-              color: tech === t ? '#ffffff' : 'var(--ink-mid)',
-              fontWeight: tech === t ? 600 : 400,
-              fontSize: '0.88rem',
-              boxShadow: '0 2px 8px rgba(46,59,43,0.08)',
-              transition: 'all 0.15s',
-            }}>
+            className={`flex-1 p-3 rounded-2xl border-none cursor-pointer text-[0.88rem] shadow-[0_2px_8px_rgba(46,59,43,0.08)] transition-all duration-150 ${
+              tech === t
+                ? 'bg-sage text-white font-semibold'
+                : 'bg-white text-ink-mid font-normal'
+            }`}>
             {t === 'wimhof' ? '🌬 Wim Hof' : '🌿 Anulom Vilom'}
           </button>
         ))}
       </div>
 
       {/* Technique description */}
-      <div style={{ background: '#ffffff', borderRadius: '16px', padding: '16px', marginBottom: '24px', boxShadow: '0 2px 12px rgba(46,59,43,0.06)' }}>
+      <div className="bg-white rounded-2xl p-4 mb-6 shadow-[0_2px_12px_rgba(46,59,43,0.06)]">
         {tech === 'wimhof' ? (
           <>
-            <p style={{ fontSize: '0.88rem', color: 'var(--ink-mid)', lineHeight: 1.7 }}>
+            <p className="text-[0.88rem] text-ink-mid leading-[1.7]">
               30–40 cycles of controlled breathing, followed by an empty-lung breath hold, then a deep recovery breath. Activates the sympathetic nervous system and alkalises the blood.
             </p>
-            <p style={{ fontSize: '0.78rem', color: 'var(--sage-dark)', marginTop: '8px', fontWeight: 500 }}>
+            <p className="text-[0.78rem] text-sage-dark mt-2 font-medium">
               ⚠ Never practise in water or while driving.
             </p>
           </>
         ) : (
-          <p style={{ fontSize: '0.88rem', color: 'var(--ink-mid)', lineHeight: 1.7 }}>
+          <p className="text-[0.88rem] text-ink-mid leading-[1.7]">
             Alternate-nostril breathing. 4-count inhale through one nostril, 8-count exhale through the other. Balances the left and right hemispheres, activates the vagus nerve, calms the mind.
           </p>
         )}
@@ -70,37 +62,34 @@ export default function BreathePage() {
 
       {/* Config */}
       {tech === 'wimhof' ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', marginBottom: '28px' }}>
+        <div className="flex flex-col gap-5 mb-7">
           <LabeledSlider label={`Rounds · ${rounds}`} min={1} max={5} value={rounds} onChange={setRounds} />
           <LabeledSlider label={`Breaths per round · ${breaths}`} min={20} max={40} value={breaths} onChange={setBreaths} />
         </div>
       ) : (
-        <div style={{ marginBottom: '28px' }}>
+        <div className="mb-7">
           <LabeledSlider label={`Cycles · ${avRounds}`} min={5} max={20} value={avRounds} onChange={setAvRounds} />
         </div>
       )}
 
       {/* Narration mode */}
-      <div style={{ marginBottom: '32px' }}>
-        <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink-mid)', marginBottom: '10px', letterSpacing: '0.04em' }}>
+      <div className="mb-8">
+        <div className="text-[0.78rem] font-semibold text-ink-mid mb-2.5 tracking-wider">
           NARRATION
         </div>
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div className="flex gap-2">
           {(['guided', 'minimal', 'silent'] as NarrationMode[]).map(m => (
             <button key={m} onClick={() => setMode(m)}
-              style={{
-                flex: 1, padding: '10px 4px', borderRadius: '12px', border: 'none', cursor: 'pointer',
-                background: mode === m ? 'var(--sage)' : '#ffffff',
-                color: mode === m ? '#ffffff' : 'var(--ink-soft)',
-                fontSize: '0.78rem', fontWeight: mode === m ? 600 : 400,
-                boxShadow: '0 1px 6px rgba(46,59,43,0.07)',
-                transition: 'all 0.15s', textTransform: 'capitalize',
-              }}>
+              className={`flex-1 py-2.5 px-1 rounded-xl border-none cursor-pointer text-[0.78rem] shadow-[0_1px_6px_rgba(46,59,43,0.07)] transition-all duration-150 capitalize ${
+                mode === m
+                  ? 'bg-sage text-white font-semibold'
+                  : 'bg-white text-ink-soft font-normal'
+              }`}>
               {m}
             </button>
           ))}
         </div>
-        <p style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', marginTop: '8px' }}>
+        <p className="text-[0.72rem] text-ink-soft mt-2">
           {mode === 'guided' ? 'Full narration — instructions, counts, physiology.' :
            mode === 'minimal' ? 'Counts and phase cues only.' :
            'Visual timer only — complete silence.'}
@@ -108,12 +97,7 @@ export default function BreathePage() {
       </div>
 
       <button onClick={handleBegin}
-        style={{
-          width: '100%', padding: '15px', borderRadius: '16px', border: 'none',
-          background: 'var(--sage)', color: '#ffffff',
-          fontSize: '1rem', fontWeight: 600, cursor: 'pointer',
-          boxShadow: '0 4px 16px rgba(139,175,124,0.35)',
-        }}>
+        className="w-full py-[15px] rounded-2xl border-none bg-sage text-white text-base font-semibold cursor-pointer shadow-[0_4px_16px_rgba(139,175,124,0.35)]">
         Begin →
       </button>
     </div>
@@ -125,10 +109,11 @@ function LabeledSlider({ label, min, max, value, onChange }: {
 }) {
   return (
     <div>
-      <div style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--ink-mid)', marginBottom: '8px' }}>{label}</div>
-      <input type="range" min={min} max={max} value={value} onChange={e => onChange(Number(e.target.value))}
-        style={{ width: '100%', accentColor: 'var(--sage)', cursor: 'pointer' }} />
-      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: 'var(--ink-soft)', marginTop: '2px' }}>
+      <div className="text-[0.8rem] font-semibold text-ink-mid mb-2">{label}</div>
+      <input type="range" min={min} max={max} value={value}
+        onChange={e => onChange(Number(e.target.value))}
+        className="w-full cursor-pointer [accent-color:var(--sage)]" />
+      <div className="flex justify-between text-[0.7rem] text-ink-soft mt-0.5">
         <span>{min}</span><span>{max}</span>
       </div>
     </div>
