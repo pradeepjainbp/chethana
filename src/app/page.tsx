@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/server-auth';
+import LogoutButton from '@/components/LogoutButton';
 import { db } from '@/db';
 import { profiles, waterLogs, fastingSessions } from '@/db/schema';
 import { eq, and, gte, isNull } from 'drizzle-orm';
@@ -47,16 +48,19 @@ export default async function HomePage() {
     <div style={{ background: 'var(--cream)', minHeight: '100vh', padding: '24px 16px 0' }}>
 
       {/* ── Greeting ─────────────────────────────────────────── */}
-      <div style={{ marginBottom: '22px' }}>
-        <h1 style={{
-          fontFamily: 'var(--font-dm-serif), Georgia, serif',
-          fontSize: '1.55rem', color: 'var(--ink)', lineHeight: 1.2,
-        }}>
-          Namaste, {firstName}.
-        </h1>
-        <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', marginTop: '4px' }}>
-          Day {daysSince} of your journey.
-        </p>
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+        <div>
+          <h1 style={{
+            fontFamily: 'var(--font-dm-serif), Georgia, serif',
+            fontSize: '1.55rem', color: 'var(--ink)', lineHeight: 1.2,
+          }}>
+            Namaste, {firstName}.
+          </h1>
+          <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', marginTop: '4px' }}>
+            Day {daysSince} of your journey.
+          </p>
+        </div>
+        <LogoutButton />
       </div>
 
       {/* ── Action cards 2×3 ─────────────────────────────────── */}
