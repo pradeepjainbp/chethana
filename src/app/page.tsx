@@ -25,7 +25,7 @@ export default async function HomePage() {
     waterLogs,
     gte(waterLogs.loggedAt, todayStart),
   );
-  const totalWaterMl = waterRows.reduce((s: number, r: any) => s + (r.amountMl ?? 0), 0);
+  const totalWaterMl = waterRows.reduce((s: number, r: { amountMl?: number | null }) => s + (r.amountMl ?? 0), 0);
 
   // Active fasting session
   const [activeFast] = await scoped.selectFields(
