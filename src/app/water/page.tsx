@@ -129,7 +129,7 @@ export default function WaterPage() {
         fontSize: '1.6rem', color: 'var(--ink)', marginBottom: '4px',
       }}>Hydration</div>
       <div style={{ fontSize: '0.83rem', color: 'var(--ink-soft)', marginBottom: '28px' }}>
-        Today's water intake · Resets at midnight
+        Today&apos;s water intake · Resets at midnight
       </div>
 
       {/* Circular ring — P1.35 */}
@@ -226,7 +226,7 @@ export default function WaterPage() {
       {logs.length > 0 && (
         <div>
           <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginBottom: '10px', letterSpacing: '0.06em' }}>
-            TODAY'S LOG
+            TODAY&apos;S LOG
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
             {[...logs].reverse().map(log => (

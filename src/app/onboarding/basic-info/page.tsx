@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -50,7 +49,6 @@ const PRAKRITI_OPTIONS = [
 // ── Wizard ───────────────────────────────────────────────────────────────────
 
 export default function OnboardingWizard() {
-  const router = useRouter();
   const [step, setStep] = useState(0);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
