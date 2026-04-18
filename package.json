@@ -16,6 +16,8 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
   },
   "dependencies": {
+    "@neondatabase/auth": "^0.2.0-beta.1",
+    "@neondatabase/neon-js": "^0.2.0-beta.1",
     "@neondatabase/serverless": "^1.0.2",
     "@opennextjs/cloudflare": "^1.19.1",
     "drizzle-orm": "^0.45.2",
