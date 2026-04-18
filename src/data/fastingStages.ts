@@ -23,6 +23,7 @@ export const FASTING_STAGES: FastingStage[] = [
     metabolism:
       'Blood glucose peaks after your last meal. Cells are taking up glucose driven by insulin — energy is abundant and being stored as glycogen in the liver and fat in adipose tissue.',
     hormones:
+      // voice-lint-ignore: "dominate" used in scientific sense (anabolic vs catabolic balance)
       'Insulin is at its highest. Glucagon is suppressed. This is the storage phase — anabolic hormones dominate and fat breakdown is paused.',
     gut:
       'Peristalsis is active. Your small intestine is absorbing nutrients. Digestive enzymes are flowing. The migrating motor complex — the gut\'s natural cleaning wave — is paused while food is present.',
