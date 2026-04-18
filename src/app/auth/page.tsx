@@ -1,14 +1,31 @@
 'use client';
 
+import { useState } from 'react';
+
 export default function AuthPage() {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
   async function signInWithGoogle() {
-    const res = await fetch('/api/auth/sign-in/social', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ provider: 'google', callbackURL: `${window.location.origin}/` }),
-    });
-    const data = await res.json();
-    if (data.url) window.location.href = data.url;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/sign-in/social', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider: 'google', callbackURL: `${window.location.origin}/` }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error ?? `Error ${res.status} — check Neon Auth allowed URLs`);
+        setLoading(false);
+      }
+    } catch (e) {
+      setError(String(e));
+      setLoading(false);
+    }
   }
 
   return (
@@ -33,6 +50,7 @@ export default function AuthPage() {
 
         <button
           onClick={signInWithGoogle}
+          disabled={loading}
           className="w-full flex items-center justify-center gap-3 rounded-2xl border transition-all"
           style={{
             padding: '14px 20px',
@@ -41,15 +59,22 @@ export default function AuthPage() {
             color: 'var(--ink)',
             fontSize: '0.95rem',
             fontWeight: 500,
-            cursor: 'pointer',
+            cursor: loading ? 'not-allowed' : 'pointer',
+            opacity: loading ? 0.7 : 1,
             boxShadow: '0 2px 12px rgba(46,59,43,0.08)',
           }}
           onMouseOver={e => (e.currentTarget.style.borderColor = 'var(--sage)')}
           onMouseOut={e => (e.currentTarget.style.borderColor = '#E8EFE1')}
         >
           <GoogleIcon />
-          Continue with Google
+          {loading ? 'Redirecting…' : 'Continue with Google'}
         </button>
+
+        {error && (
+          <p style={{ fontSize: '0.78rem', color: '#c0392b', textAlign: 'center', lineHeight: 1.5 }}>
+            {error}
+          </p>
+        )}
 
         <p style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', textAlign: 'center', lineHeight: 1.6 }}>
           Personal use only · Your data stays yours
