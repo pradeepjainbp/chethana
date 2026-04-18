@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/server-auth';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { profiles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,11 +10,8 @@ export default async function OnboardingPage() {
   const { data: session } = await auth.getSession();
   if (!session?.user) redirect('/auth');
 
-  const [existing] = await db
-    .select({ id: profiles.id })
-    .from(profiles)
-    .where(eq(profiles.userId, session.user.id))
-    .limit(1);
+  const scoped = userScoped(session.user.id);
+  const [existing] = await scoped.selectFields({ id: profiles.id }, profiles).limit(1);
 
   if (existing) redirect('/');
 

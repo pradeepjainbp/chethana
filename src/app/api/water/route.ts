@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/server-auth';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { waterLogs } from '@/db/schema';
-import { eq, gte, and, sum } from 'drizzle-orm';
+import { gte, sum } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -17,16 +17,20 @@ export async function GET() {
   const { data: session } = await auth.getSession();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const [totRow] = await db
-    .select({ total: sum(waterLogs.amountMl) })
-    .from(waterLogs)
-    .where(and(eq(waterLogs.userId, session.user.id), gte(waterLogs.loggedAt, todayStart())));
+  const scoped = userScoped(session.user.id);
+  const since = todayStart();
 
-  const logs = await db
-    .select({ id: waterLogs.id, amountMl: waterLogs.amountMl, loggedAt: waterLogs.loggedAt })
-    .from(waterLogs)
-    .where(and(eq(waterLogs.userId, session.user.id), gte(waterLogs.loggedAt, todayStart())))
-    .orderBy(waterLogs.loggedAt);
+  const [totRow] = await scoped.selectFields(
+    { total: sum(waterLogs.amountMl) },
+    waterLogs,
+    gte(waterLogs.loggedAt, since),
+  );
+
+  const logs = await scoped.selectFields(
+    { id: waterLogs.id, amountMl: waterLogs.amountMl, loggedAt: waterLogs.loggedAt },
+    waterLogs,
+    gte(waterLogs.loggedAt, since),
+  ).orderBy(waterLogs.loggedAt);
 
   return NextResponse.json({
     totalMl: Number(totRow?.total ?? 0),
@@ -44,16 +48,17 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid amount' }, { status: 400 });
   }
 
-  const [created] = await db
-    .insert(waterLogs)
-    .values({ userId: session.user.id, amountMl, loggedAt: new Date() })
+  const scoped = userScoped(session.user.id);
+
+  const [created] = await scoped
+    .insert(waterLogs, { amountMl, loggedAt: new Date() })
     .returning();
 
-  // Return updated total for the day
-  const [totRow] = await db
-    .select({ total: sum(waterLogs.amountMl) })
-    .from(waterLogs)
-    .where(and(eq(waterLogs.userId, session.user.id), gte(waterLogs.loggedAt, todayStart())));
+  const [totRow] = await scoped.selectFields(
+    { total: sum(waterLogs.amountMl) },
+    waterLogs,
+    gte(waterLogs.loggedAt, todayStart()),
+  );
 
   return NextResponse.json({ log: created, totalMl: Number(totRow?.total ?? 0) });
 }

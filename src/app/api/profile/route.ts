@@ -1,8 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/server-auth';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { profiles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -19,16 +18,13 @@ export async function POST(request: Request) {
     activityLevel, avgSleepHours, knownConditions, prakriti,
   } = body;
 
-  // Strip 'None' sentinel from conditions — it means no conditions
   const cleanConditions: string[] = (knownConditions ?? []).filter((c: string) => c !== 'None');
 
-  // Profile completion (P1.11 tiers)
   const tier1 = age && sex && heightCm && weightKg;
   const tier2 = goals?.length && dietaryPreference && activityLevel && avgSleepHours;
   const profileCompletion = !tier1 ? 0 : tier2 ? 60 : 30;
 
   const values = {
-    userId:              session.user.id,
     name:                session.user.name ?? null,
     age:                 age ? parseInt(age, 10) : null,
     sex:                 sex || null,
@@ -47,9 +43,9 @@ export async function POST(request: Request) {
     updatedAt:           new Date(),
   };
 
-  await db
-    .insert(profiles)
-    .values(values)
+  const scoped = userScoped(session.user.id);
+  await scoped
+    .insert(profiles, values)
     .onConflictDoUpdate({
       target: profiles.userId,
       set: values,
@@ -64,11 +60,8 @@ export async function GET() {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.userId, session.user.id))
-    .limit(1);
+  const scoped = userScoped(session.user.id);
+  const [profile] = await scoped.select(profiles).limit(1);
 
   return NextResponse.json({ profile: profile ?? null });
 }

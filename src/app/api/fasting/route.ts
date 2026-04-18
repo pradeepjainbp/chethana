@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/server-auth';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { fastingSessions } from '@/db/schema';
-import { eq, isNull, and } from 'drizzle-orm';
+import { eq, isNull } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -11,10 +11,9 @@ export async function GET() {
   const { data: session } = await auth.getSession();
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-  const [active] = await db
-    .select()
-    .from(fastingSessions)
-    .where(and(eq(fastingSessions.userId, session.user.id), isNull(fastingSessions.endedAt)))
+  const scoped = userScoped(session.user.id);
+  const [active] = await scoped
+    .select(fastingSessions, isNull(fastingSessions.endedAt))
     .limit(1);
 
   return NextResponse.json({ fast: active ?? null });
@@ -26,16 +25,17 @@ export async function POST(req: NextRequest) {
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const { protocol } = await req.json() as { protocol: string };
+  const scoped = userScoped(session.user.id);
 
   // Clean up any dangling active fasts
-  await db
-    .update(fastingSessions)
-    .set({ endedAt: new Date() })
-    .where(and(eq(fastingSessions.userId, session.user.id), isNull(fastingSessions.endedAt)));
+  await scoped.update(
+    fastingSessions,
+    { endedAt: new Date() },
+    isNull(fastingSessions.endedAt),
+  );
 
-  const [created] = await db
-    .insert(fastingSessions)
-    .values({ userId: session.user.id, startedAt: new Date(), protocol })
+  const [created] = await scoped
+    .insert(fastingSessions, { startedAt: new Date(), protocol })
     .returning();
 
   return NextResponse.json({ fast: created });
@@ -52,11 +52,13 @@ export async function PATCH(req: NextRequest) {
     notes?: string;
   };
 
-  const [row] = await db
-    .select({ startedAt: fastingSessions.startedAt })
-    .from(fastingSessions)
-    .where(and(eq(fastingSessions.userId, session.user.id), eq(fastingSessions.id, sessionId)))
-    .limit(1);
+  const scoped = userScoped(session.user.id);
+
+  const [row] = await scoped.selectFields(
+    { startedAt: fastingSessions.startedAt },
+    fastingSessions,
+    eq(fastingSessions.id, sessionId),
+  ).limit(1);
 
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
@@ -65,10 +67,12 @@ export async function PATCH(req: NextRequest) {
     ? String(Number(((endedAt.getTime() - row.startedAt.getTime()) / 3_600_000).toFixed(2)))
     : '0';
 
-  const [ended] = await db
-    .update(fastingSessions)
-    .set({ endedAt, durationHours, maxStageReached, notes: notes ?? null })
-    .where(and(eq(fastingSessions.userId, session.user.id), eq(fastingSessions.id, sessionId)))
+  const [ended] = await scoped
+    .update(
+      fastingSessions,
+      { endedAt, durationHours, maxStageReached, notes: notes ?? null },
+      eq(fastingSessions.id, sessionId),
+    )
     .returning();
 
   return NextResponse.json({ fast: ended });

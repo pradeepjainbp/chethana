@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/server-auth';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { breathingSessions } from '@/db/schema';
 
 export const dynamic = 'force-dynamic';
@@ -12,8 +12,8 @@ export async function POST(request: Request) {
   const body = await request.json();
   const { technique, roundsCompleted, totalDurationSeconds, holdDurations, narrationMode, feelingAfter } = body;
 
-  await db.insert(breathingSessions).values({
-    userId:               session.user.id,
+  const scoped = userScoped(session.user.id);
+  await scoped.insert(breathingSessions, {
     technique:            technique ?? null,
     roundsCompleted:      roundsCompleted ?? null,
     totalDurationSeconds: totalDurationSeconds ?? null,

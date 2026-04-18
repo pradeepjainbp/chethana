@@ -1,9 +1,8 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/server-auth';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { profiles } from '@/db/schema';
-import { eq } from 'drizzle-orm';
 import LogoutButton from '@/components/LogoutButton';
 
 export const dynamic = 'force-dynamic';
@@ -12,11 +11,8 @@ export default async function ProfilePage() {
   const { data: session } = await auth.getSession();
   if (!session?.user) redirect('/auth');
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.userId, session.user.id))
-    .limit(1);
+  const scoped = userScoped(session.user.id);
+  const [profile] = await scoped.select(profiles).limit(1);
 
   const name = profile?.name ?? session.user.name ?? '';
   const email = session.user.email ?? '';

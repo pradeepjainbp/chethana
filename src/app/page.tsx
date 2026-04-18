@@ -2,9 +2,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/server-auth';
 import LogoutButton from '@/components/LogoutButton';
-import { db } from '@/db';
+import { userScoped } from '@/db/scoped';
 import { profiles, waterLogs, fastingSessions } from '@/db/schema';
-import { eq, and, gte, isNull } from 'drizzle-orm';
+import { gte, isNull } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,29 +12,27 @@ export default async function HomePage() {
   const { data: session } = await auth.getSession();
   if (!session?.user) redirect('/auth');
 
-  const [profile] = await db
-    .select()
-    .from(profiles)
-    .where(eq(profiles.userId, session.user.id))
-    .limit(1);
+  const scoped = userScoped(session.user.id);
 
+  const [profile] = await scoped.select(profiles).limit(1);
   if (!profile) redirect('/onboarding');
 
   // Today's water total
   const todayStart = new Date();
   todayStart.setHours(0, 0, 0, 0);
-  const waterRows = await db
-    .select({ amountMl: waterLogs.amountMl })
-    .from(waterLogs)
-    .where(and(eq(waterLogs.userId, session.user.id), gte(waterLogs.loggedAt, todayStart)));
+  const waterRows = await scoped.selectFields(
+    { amountMl: waterLogs.amountMl },
+    waterLogs,
+    gte(waterLogs.loggedAt, todayStart),
+  );
   const totalWaterMl = waterRows.reduce((s, r) => s + (r.amountMl ?? 0), 0);
 
   // Active fasting session
-  const [activeFast] = await db
-    .select({ startedAt: fastingSessions.startedAt, protocol: fastingSessions.protocol })
-    .from(fastingSessions)
-    .where(and(eq(fastingSessions.userId, session.user.id), isNull(fastingSessions.endedAt)))
-    .limit(1);
+  const [activeFast] = await scoped.selectFields(
+    { startedAt: fastingSessions.startedAt, protocol: fastingSessions.protocol },
+    fastingSessions,
+    isNull(fastingSessions.endedAt),
+  ).limit(1);
 
   // Days on journey (min 1)
   const daysSince = profile.createdAt
@@ -45,26 +43,23 @@ export default async function HomePage() {
   const completion = profile.profileCompletion ?? 0;
 
   return (
-    <div style={{ background: 'var(--cream)', minHeight: '100vh', padding: '24px 16px 0' }}>
+    <div className="bg-cream min-h-screen px-4 pt-6 pb-24">
 
       {/* ── Greeting ─────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '22px' }}>
+      <div className="flex items-start justify-between mb-6">
         <div>
-          <h1 style={{
-            fontFamily: 'var(--font-dm-serif), Georgia, serif',
-            fontSize: '1.55rem', color: 'var(--ink)', lineHeight: 1.2,
-          }}>
+          <h1 className="font-serif text-[1.55rem] text-ink leading-tight">
             Namaste, {firstName}.
           </h1>
-          <p style={{ fontSize: '0.8rem', color: 'var(--ink-soft)', marginTop: '4px' }}>
+          <p className="text-[0.8rem] text-ink-soft mt-1">
             Day {daysSince} of your journey.
           </p>
         </div>
         <LogoutButton />
       </div>
 
-      {/* ── Action cards 2×3 ─────────────────────────────────── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px' }}>
+      {/* ── Action cards 2×3 (Bento Grid) ─────────────────────── */}
+      <div className="grid grid-cols-2 gap-3 mb-5">
         <ActionCard
           title="BREATHE"
           icon="🌬"
@@ -133,35 +128,26 @@ function ActionCard({ title, icon, sub, detail, href, live, disabled }: {
   href: string; live?: boolean; disabled?: boolean;
 }) {
   const inner = (
-    <div style={{
-      background: '#ffffff',
-      borderRadius: 'var(--radius-card)',
-      padding: '14px',
-      boxShadow: 'var(--shadow-card)',
-      height: '110px',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'space-between',
-      border: `1.5px solid ${live ? 'var(--sage-light)' : 'transparent'}`,
-      opacity: disabled ? 0.45 : 1,
-    }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-        <span style={{ fontSize: '1.1rem' }}>{icon}</span>
-        <span style={{ fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em', color: 'var(--ink)' }}>
+    <div className={`bg-white rounded-card p-[14px] shadow-card h-[110px] flex flex-col justify-between border-[1.5px] transition-transform active:scale-[0.98]
+      ${live ? 'border-sage-light' : 'border-transparent'}
+      ${disabled ? 'opacity-45' : 'opacity-100'}`}>
+      <div className="flex items-center gap-[7px]">
+        <span className="text-[1.1rem]">{icon}</span>
+        <span className="text-[0.65rem] font-bold tracking-[0.12em] text-ink uppercase">
           {title}
         </span>
-        {live && <span style={{ marginLeft: 'auto', width: '6px', height: '6px', borderRadius: '50%', background: 'var(--sage)', flexShrink: 0 }} />}
+        {live && <span className="ml-auto w-[6px] h-[6px] rounded-full bg-sage shrink-0" />}
       </div>
       <div>
-        <div style={{ fontSize: '0.82rem', color: 'var(--ink-mid)', fontWeight: 500, lineHeight: 1.3 }}>{sub}</div>
-        <div style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', marginTop: '3px' }}>{detail}</div>
+        <div className="text-[0.82rem] text-ink-mid font-medium leading-snug">{sub}</div>
+        <div className="text-[0.72rem] text-ink-soft mt-[3px]">{detail}</div>
       </div>
     </div>
   );
 
   if (disabled || href === '#') return inner;
   return (
-    <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
+    <Link href={href} className="no-underline block">
       {inner}
     </Link>
   );
@@ -177,29 +163,25 @@ function CompletionBar({ completion }: { completion: number }) {
     : null;
 
   return (
-    <div style={{
-      background: '#ffffff', borderRadius: 'var(--radius-card)',
-      padding: '14px 16px', boxShadow: 'var(--shadow-card)', marginBottom: '12px',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-        <span style={{ fontSize: '0.76rem', fontWeight: 600, color: 'var(--ink-mid)', letterSpacing: '0.04em' }}>
+    <div className="bg-white rounded-card p-4 shadow-card mb-3">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[0.76rem] font-semibold text-ink-mid tracking-[0.04em]">
           YOUR PROFILE
         </span>
-        <span style={{ fontSize: '0.82rem', fontWeight: 700, color: 'var(--sage-dark)' }}>
+        <span className="text-[0.82rem] font-bold text-sage-dark">
           {completion}%
         </span>
       </div>
-      <div style={{ height: '5px', background: 'var(--sage-light)', borderRadius: '100px', overflow: 'hidden' }}>
-        <div style={{
-          height: '100%', width: `${completion}%`,
-          background: 'var(--sage)', borderRadius: '100px',
-          transition: 'width 0.5s ease',
-        }} />
+      <div className="h-[5px] bg-sage-light rounded-full overflow-hidden">
+        <div 
+          className="h-full bg-sage rounded-full transition-all duration-500 ease-out" 
+          style={{ width: `${completion}%` }}
+        />
       </div>
       {cta && (
-        <p style={{ fontSize: '0.74rem', color: 'var(--ink-soft)', marginTop: '8px', lineHeight: 1.5 }}>
+        <p className="text-[0.74rem] text-ink-soft mt-2 leading-relaxed">
           {cta.href !== '#'
-            ? <Link href={cta.href} style={{ color: 'var(--sage-dark)', textDecoration: 'none' }}>{cta.text}</Link>
+            ? <Link href={cta.href} className="text-sage-dark font-medium no-underline">{cta.text}</Link>
             : cta.text}
         </p>
       )}
@@ -222,20 +204,11 @@ const VAIDYA_NOTES = [
 function VaidyaNote() {
   const note = VAIDYA_NOTES[new Date().getDay() % VAIDYA_NOTES.length];
   return (
-    <div style={{
-      background: 'rgba(139,175,124,0.07)',
-      border: '1px solid var(--sage-light)',
-      borderRadius: 'var(--radius-card)',
-      padding: '16px',
-      marginBottom: '12px',
-    }}>
-      <div style={{
-        fontSize: '0.65rem', fontWeight: 700, letterSpacing: '0.12em',
-        color: 'var(--sage-dark)', marginBottom: '10px',
-      }}>
+    <div className="bg-sage/10 border border-sage-light rounded-card p-4 mb-3">
+      <div className="text-[0.65rem] font-bold tracking-[0.12em] text-sage-dark mb-2.5">
         VAIDYA&apos;S NOTE
       </div>
-      <p style={{ fontSize: '0.88rem', color: 'var(--ink-mid)', lineHeight: 1.75, fontStyle: 'italic' }}>
+      <p className="text-[0.88rem] text-ink-mid leading-relaxed italic">
         &ldquo;{note}&rdquo;
       </p>
     </div>
