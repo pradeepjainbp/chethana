@@ -21,43 +21,31 @@ function WaterRing({ totalMl, goal }: { totalMl: number; goal: number }) {
   const offset = circ * (1 - pct);
   const size = (R + stroke) * 2 + 4;
 
-  // Wave fill colour changes at goal
   const ringColor = pct >= 1 ? '#8BAF7C' : '#A8C4E8';
 
   return (
-    <div style={{ position: 'relative', width: size, height: size, margin: '0 auto' }}>
-      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-        {/* Track */}
+    <div className="relative mx-auto" style={{ width: size, height: size }}>
+      <svg width={size} height={size} className="-rotate-90">
         <circle
           cx={size / 2} cy={size / 2} r={R}
           fill="none" stroke="rgba(168,196,232,0.2)" strokeWidth={stroke}
         />
-        {/* Progress arc */}
         <circle
           cx={size / 2} cy={size / 2} r={R}
           fill="none" stroke={ringColor} strokeWidth={stroke}
           strokeLinecap="round"
           strokeDasharray={circ}
           strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 0.5s ease, stroke 0.4s ease' }}
+          className="transition-[stroke-dashoffset,stroke] duration-500 ease-in-out"
         />
       </svg>
 
-      {/* Centre label */}
-      <div style={{
-        position: 'absolute', inset: 0,
-        display: 'flex', flexDirection: 'column',
-        alignItems: 'center', justifyContent: 'center',
-        gap: '2px',
-      }}>
-        <div style={{ fontSize: '0.9rem' }}>{pct >= 1 ? '✓' : '💧'}</div>
-        <div style={{
-          fontFamily: 'var(--font-dm-serif), Georgia, serif',
-          fontSize: '1.5rem', fontWeight: 700, color: 'var(--ink)', lineHeight: 1,
-        }}>
+      <div className="absolute inset-0 flex flex-col items-center justify-center gap-0.5">
+        <div className="text-sm">{pct >= 1 ? '✓' : '💧'}</div>
+        <div className="font-serif text-2xl font-bold text-ink leading-none">
           {totalMl >= 1000 ? `${(totalMl / 1000).toFixed(1)}L` : `${totalMl}`}
         </div>
-        <div style={{ fontSize: '0.7rem', color: 'var(--ink-soft)' }}>
+        <div className="text-[0.7rem] text-ink-soft">
           {pct >= 1 ? 'Goal reached' : `of ${goal / 1000}L goal`}
         </div>
       </div>
@@ -71,7 +59,7 @@ export default function WaterPage() {
   const [totalMl, setTotalMl] = useState(0);
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState(true);
-  const [adding, setAdding] = useState<number | null>(null); // which amount is in-flight
+  const [adding, setAdding] = useState<number | null>(null);
   const [customMl, setCustomMl] = useState(200);
   const [showCustom, setShowCustom] = useState(false);
   const [ripple, setRipple] = useState(false);
@@ -97,7 +85,6 @@ export default function WaterPage() {
       const { totalMl: newTotal, log } = await res.json() as { totalMl: number; log: LogEntry };
       setTotalMl(newTotal);
       setLogs(prev => [...prev, log]);
-      // Ripple animation on ring
       setRipple(true);
       setTimeout(() => setRipple(false), 400);
     } finally {
@@ -111,69 +98,49 @@ export default function WaterPage() {
   }
 
   if (loading) return (
-    <div style={{
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      minHeight: '60vh', color: 'var(--ink-soft)', fontSize: '0.85rem',
-    }}>
-      <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>💧</span> Loading…
+    <div className="flex items-center justify-center min-h-[60vh] text-ink-soft text-sm">
+      <span className="text-2xl mr-2">💧</span> Loading…
     </div>
   );
 
   const remaining = Math.max(0, GOAL_ML - totalMl);
 
   return (
-    <div style={{ padding: '24px 20px 100px', maxWidth: '420px', margin: '0 auto' }}>
+    <div className="px-5 pt-6 pb-24 max-w-md mx-auto">
 
-      <div style={{
-        fontFamily: 'var(--font-dm-serif), Georgia, serif',
-        fontSize: '1.6rem', color: 'var(--ink)', marginBottom: '4px',
-      }}>Hydration</div>
-      <div style={{ fontSize: '0.83rem', color: 'var(--ink-soft)', marginBottom: '28px' }}>
+      <div className="font-serif text-[1.6rem] text-ink mb-1">Hydration</div>
+      <div className="text-[0.83rem] text-ink-soft mb-7">
         Today&apos;s water intake · Resets at midnight
       </div>
 
-      {/* Circular ring — P1.35 */}
-      <div style={{
-        background: 'white', borderRadius: '20px', padding: '28px 20px 24px',
-        boxShadow: `0 2px 16px rgba(46,59,43,0.07)`,
-        marginBottom: '20px',
-        transform: ripple ? 'scale(1.015)' : 'scale(1)',
-        transition: 'transform 0.2s ease',
-      }}>
+      {/* Circular ring */}
+      <div className={`bg-white rounded-[20px] px-5 pt-7 pb-6 shadow-[0_2px_16px_rgba(46,59,43,0.07)] mb-5 transition-transform duration-200 ease-in-out ${ripple ? 'scale-[1.015]' : 'scale-100'}`}>
         <WaterRing totalMl={totalMl} goal={GOAL_ML} />
 
         {remaining > 0 && (
-          <div style={{
-            textAlign: 'center', marginTop: '14px',
-            fontSize: '0.82rem', color: 'var(--ink-soft)',
-          }}>
+          <div className="text-center mt-3.5 text-[0.82rem] text-ink-soft">
             {remaining} ml to go
           </div>
         )}
       </div>
 
-      {/* Quick-add buttons — P1.36 */}
-      <div style={{ marginBottom: '16px' }}>
-        <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginBottom: '10px', letterSpacing: '0.06em' }}>
-          QUICK ADD
-        </div>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px' }}>
+      {/* Quick-add buttons */}
+      <div className="mb-4">
+        <div className="text-[0.78rem] text-ink-soft mb-2.5 tracking-wider">QUICK ADD</div>
+        <div className="grid grid-cols-4 gap-2">
           {QUICK_AMOUNTS.map(ml => (
             <button
               key={ml}
               onClick={() => handleAdd(ml)}
               disabled={adding !== null}
-              style={{
-                padding: '12px 4px', borderRadius: '12px', border: 'none',
-                background: adding === ml ? 'var(--sage)' : 'rgba(168,196,232,0.18)',
-                color: adding === ml ? 'white' : 'var(--ink)',
-                fontSize: '0.82rem', fontWeight: 600, cursor: adding !== null ? 'not-allowed' : 'pointer',
-                opacity: adding !== null && adding !== ml ? 0.6 : 1,
-                transition: 'all 0.15s',
-              }}
+              className={`px-1 py-3 rounded-xl border-none text-[0.82rem] font-semibold transition-all duration-150 ${
+                adding === ml
+                  ? 'bg-sage text-white'
+                  : 'bg-[#A8C4E8]/20 text-ink'
+              } ${adding !== null ? 'cursor-not-allowed' : 'cursor-pointer'} ${adding !== null && adding !== ml ? 'opacity-60' : 'opacity-100'}`}
             >
               {adding === ml ? '…' : `+${ml}`}
-              <div style={{ fontSize: '0.65rem', fontWeight: 400, marginTop: '2px', opacity: 0.7 }}>ml</div>
+              <div className="text-[0.65rem] font-normal mt-0.5 opacity-70">ml</div>
             </button>
           ))}
         </div>
@@ -183,39 +150,25 @@ export default function WaterPage() {
       {!showCustom ? (
         <button
           onClick={() => setShowCustom(true)}
-          style={{
-            width: '100%', padding: '12px', borderRadius: '12px',
-            border: '1.5px dashed rgba(139,175,124,0.4)', background: 'transparent',
-            color: 'var(--ink-soft)', fontSize: '0.85rem', cursor: 'pointer',
-            marginBottom: '20px',
-          }}
+          className="w-full px-3 py-3 rounded-xl border-[1.5px] border-dashed border-sage/40 bg-transparent text-ink-soft text-[0.85rem] cursor-pointer mb-5"
         >
           + Custom amount
         </button>
       ) : (
-        <div style={{
-          background: 'white', borderRadius: '12px', padding: '16px',
-          marginBottom: '20px', boxShadow: '0 1px 8px rgba(46,59,43,0.06)',
-        }}>
-          <div style={{ fontSize: '0.82rem', color: 'var(--ink)', marginBottom: '10px', fontWeight: 600 }}>
+        <div className="bg-white rounded-xl p-4 mb-5 shadow-[0_1px_8px_rgba(46,59,43,0.06)]">
+          <div className="text-[0.82rem] text-ink mb-2.5 font-semibold">
             Custom: {customMl} ml
           </div>
           <input type="range" min={50} max={1000} step={50} value={customMl}
             onChange={e => setCustomMl(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--sage)', marginBottom: '12px' }} />
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => handleAdd(customMl)} disabled={adding !== null} style={{
-              flex: 1, padding: '10px', borderRadius: '10px', border: 'none',
-              background: 'var(--sage)', color: 'white', fontWeight: 600,
-              fontSize: '0.85rem', cursor: 'pointer',
-            }}>
+            className="w-full mb-3 [accent-color:var(--sage)]" />
+          <div className="flex gap-2">
+            <button onClick={() => handleAdd(customMl)} disabled={adding !== null}
+              className="flex-1 px-3 py-2.5 rounded-[10px] border-none bg-sage text-white font-semibold text-[0.85rem] cursor-pointer">
               Add {customMl} ml
             </button>
-            <button onClick={() => setShowCustom(false)} style={{
-              padding: '10px 14px', borderRadius: '10px',
-              border: '1px solid rgba(139,175,124,0.3)', background: 'transparent',
-              color: 'var(--ink-soft)', cursor: 'pointer', fontSize: '0.85rem',
-            }}>
+            <button onClick={() => setShowCustom(false)}
+              className="px-3.5 py-2.5 rounded-[10px] border border-sage/30 bg-transparent text-ink-soft cursor-pointer text-[0.85rem]">
               Cancel
             </button>
           </div>
@@ -225,19 +178,13 @@ export default function WaterPage() {
       {/* Today's log */}
       {logs.length > 0 && (
         <div>
-          <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginBottom: '10px', letterSpacing: '0.06em' }}>
-            TODAY&apos;S LOG
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+          <div className="text-[0.78rem] text-ink-soft mb-2.5 tracking-wider">TODAY&apos;S LOG</div>
+          <div className="flex flex-col gap-1.5">
             {[...logs].reverse().map(log => (
-              <div key={log.id} style={{
-                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-                background: 'white', borderRadius: '10px', padding: '10px 14px',
-                fontSize: '0.83rem', color: 'var(--ink)',
-                boxShadow: '0 1px 4px rgba(46,59,43,0.05)',
-              }}>
+              <div key={log.id}
+                className="flex items-center justify-between bg-white rounded-[10px] px-3.5 py-2.5 text-[0.83rem] text-ink shadow-[0_1px_4px_rgba(46,59,43,0.05)]">
                 <span>💧 {log.amountMl} ml</span>
-                <span style={{ color: 'var(--ink-soft)', fontSize: '0.78rem' }}>{fmtTime(log.loggedAt)}</span>
+                <span className="text-ink-soft text-[0.78rem]">{fmtTime(log.loggedAt)}</span>
               </div>
             ))}
           </div>
@@ -245,10 +192,7 @@ export default function WaterPage() {
       )}
 
       {logs.length === 0 && (
-        <div style={{
-          textAlign: 'center', padding: '24px', color: 'var(--ink-soft)',
-          fontSize: '0.83rem', lineHeight: 1.6,
-        }}>
+        <div className="text-center p-6 text-ink-soft text-[0.83rem] leading-relaxed">
           No water logged today.<br />
           Start with a glass — your kidneys will thank you.
         </div>
