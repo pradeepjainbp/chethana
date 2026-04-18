@@ -6,7 +6,7 @@ import { useState } from 'react';
 
 interface Props {
   stage: FastingStage;
-  isNew?: boolean; // triggers fade-in animation
+  isNew?: boolean;
 }
 
 const SECTIONS = [
@@ -37,106 +37,61 @@ export default function FastStageCard({ stage, isNew }: Props) {
       `How it feels: ${stage.feel}`,
     ].join(' ');
     speak(text, 0.78, 0.9);
-    // Reset speaking state after estimated duration
     const words = text.split(' ').length;
     setTimeout(() => setSpeaking(false), (words / 2.2) * 1000);
   }
 
   return (
-    <div
-      className={isNew ? 'stage-card-enter' : ''}
-      style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '20px',
-        boxShadow: '0 2px 12px rgba(46,59,43,0.08)',
-        border: '1px solid rgba(139,175,124,0.2)',
-      }}
-    >
+    <div className={`bg-white rounded-2xl p-5 shadow-[0_2px_12px_rgba(46,59,43,0.08)] border border-sage/20 ${isNew ? 'stage-card-enter' : ''}`}>
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <span style={{ fontSize: '1.8rem' }}>{stage.emoji}</span>
+      <div className="flex items-start justify-between mb-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-[1.8rem]">{stage.emoji}</span>
           <div>
-            <div style={{
-              fontFamily: 'var(--font-dm-serif), Georgia, serif',
-              fontSize: '1.15rem',
-              color: 'var(--ink)',
-              lineHeight: 1.2,
-            }}>
-              {stage.name}
-            </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', marginTop: '2px' }}>
+            <div className="font-serif text-[1.15rem] text-ink leading-tight">{stage.name}</div>
+            <div className="text-[0.78rem] text-ink-soft mt-0.5">
               Stage {stage.index} of 11 · {stage.tagline}
             </div>
           </div>
         </div>
 
-        {/* TTS button — P1.33 */}
         <button
           onClick={handleSpeak}
           title={speaking ? 'Stop reading' : 'Read aloud'}
-          style={{
-            background: speaking ? 'var(--sage)' : 'transparent',
-            border: `1.5px solid ${speaking ? 'var(--sage)' : 'rgba(139,175,124,0.4)'}`,
-            borderRadius: '8px',
-            padding: '6px 10px',
-            cursor: 'pointer',
-            fontSize: '1rem',
-            color: speaking ? 'white' : 'var(--ink-soft)',
-            transition: 'all 0.2s',
-            flexShrink: 0,
-          }}
+          className={`rounded-lg px-2.5 py-1.5 text-base shrink-0 transition-all duration-200 border-[1.5px] ${
+            speaking
+              ? 'bg-sage border-sage text-white'
+              : 'bg-transparent border-sage/40 text-ink-soft'
+          }`}
         >
           {speaking ? '⏹' : '🔊'}
         </button>
       </div>
 
       {/* Accordion sections */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+      <div className="flex flex-col gap-1">
         {SECTIONS.map(({ key, label, icon, color }) => (
           <div key={key}>
             <button
               onClick={() => setOpen(open === key ? null : key)}
-              style={{
-                width: '100%',
-                textAlign: 'left',
-                background: open === key ? `${color}22` : 'transparent',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 10px',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '8px',
-                transition: 'background 0.15s',
-              }}
+              className="w-full text-left rounded-lg px-2.5 py-2 flex items-center gap-2 transition-colors duration-150 border-none cursor-pointer"
+              style={{ background: open === key ? `${color}22` : 'transparent' }}
             >
-              <span style={{ fontSize: '0.9rem' }}>{icon}</span>
-              <span style={{ fontSize: '0.82rem', fontWeight: 600, color: 'var(--ink)', letterSpacing: '0.02em' }}>
-                {label}
-              </span>
-              <span style={{
-                marginLeft: 'auto',
-                fontSize: '0.7rem',
-                color: 'var(--ink-soft)',
-                transform: open === key ? 'rotate(180deg)' : 'none',
-                transition: 'transform 0.2s',
-              }}>
+              <span className="text-[0.9rem]">{icon}</span>
+              <span className="text-[0.82rem] font-semibold text-ink tracking-wide">{label}</span>
+              <span
+                className="ml-auto text-[0.7rem] text-ink-soft transition-transform duration-200"
+                style={{ transform: open === key ? 'rotate(180deg)' : 'none' }}
+              >
                 ▾
               </span>
             </button>
 
             {open === key && (
-              <div style={{
-                padding: '6px 12px 10px 30px',
-                fontSize: '0.83rem',
-                color: 'var(--ink)',
-                lineHeight: 1.65,
-                borderLeft: `3px solid ${color}`,
-                marginLeft: '10px',
-                marginTop: '2px',
-              }}>
+              <div
+                className="px-3 pt-1.5 pb-2.5 pl-[30px] text-[0.83rem] text-ink leading-relaxed ml-2.5 mt-0.5 border-l-[3px]"
+                style={{ borderColor: color }}
+              >
                 {stage[key]}
               </div>
             )}

@@ -20,8 +20,6 @@ interface EndedFast {
   maxStageReached: number;
 }
 
-// ─── helpers ─────────────────────────────────────────────────────────────────
-
 function fmtElapsed(sec: number) {
   const h = Math.floor(sec / 3600);
   const m = Math.floor((sec % 3600) / 60);
@@ -53,73 +51,57 @@ function PickerScreen({
     (selectedProtocol === 'Custom' && customH >= 24);
 
   return (
-    <div style={{ padding: '24px 20px 100px', maxWidth: '480px', margin: '0 auto' }}>
-      <div style={{
-        fontFamily: 'var(--font-dm-serif), Georgia, serif',
-        fontSize: '1.6rem', color: 'var(--ink)', marginBottom: '4px',
-      }}>Begin a Fast</div>
-      <div style={{ fontSize: '0.85rem', color: 'var(--ink-soft)', marginBottom: '24px' }}>
+    <div className="px-5 pt-6 pb-24 max-w-md mx-auto">
+      <div className="font-serif text-[1.6rem] text-ink mb-1">Begin a Fast</div>
+      <div className="text-[0.85rem] text-ink-soft mb-6">
         Choose your protocol · Vaidya will track every stage
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '20px' }}>
+      <div className="grid grid-cols-2 gap-2.5 mb-5">
         {Object.entries(PROTOCOLS).map(([key, p]) => (
-          <button key={key} onClick={() => onSelect(key)} style={{
-            padding: '14px 12px', borderRadius: '12px', textAlign: 'left', cursor: 'pointer',
-            border: `2px solid ${selectedProtocol === key ? 'var(--sage)' : 'rgba(139,175,124,0.25)'}`,
-            background: selectedProtocol === key ? 'rgba(139,175,124,0.12)' : 'white',
-            transition: 'all 0.15s',
-          }}>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>{p.label}</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', marginTop: '2px' }}>{p.description}</div>
+          <button key={key} onClick={() => onSelect(key)}
+            className={`px-3 py-3.5 rounded-xl text-left cursor-pointer transition-all duration-150 border-2 ${
+              selectedProtocol === key
+                ? 'border-sage bg-sage/10'
+                : 'border-sage/25 bg-white'
+            }`}>
+            <div className="font-bold text-base text-ink">{p.label}</div>
+            <div className="text-[0.72rem] text-ink-soft mt-0.5">{p.description}</div>
           </button>
         ))}
       </div>
 
       {selectedProtocol === 'Custom' && (
-        <div style={{
-          background: 'rgba(139,175,124,0.08)', borderRadius: '12px',
-          padding: '16px', marginBottom: '20px',
-        }}>
-          <div style={{ fontSize: '0.85rem', color: 'var(--ink)', marginBottom: '10px', fontWeight: 600 }}>
+        <div className="bg-sage/10 rounded-xl p-4 mb-5">
+          <div className="text-[0.85rem] text-ink mb-2.5 font-semibold">
             Target hours: {customH}h
           </div>
           <input type="range" min={8} max={72} step={1} value={customH}
             onChange={e => onCustomH(Number(e.target.value))}
-            style={{ width: '100%', accentColor: 'var(--sage)' }} />
-          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', color: 'var(--ink-soft)', marginTop: '4px' }}>
+            className="w-full [accent-color:var(--sage)]" />
+          <div className="flex justify-between text-[0.72rem] text-ink-soft mt-1">
             <span>8h</span><span>72h</span>
           </div>
         </div>
       )}
 
       {selectedProtocol !== 'Custom' && proto.targetH > 0 && (
-        <div style={{
-          background: 'rgba(139,175,124,0.08)', borderRadius: '12px',
-          padding: '14px 16px', marginBottom: '20px', fontSize: '0.82rem',
-          color: 'var(--ink)', lineHeight: 1.6,
-        }}>
+        <div className="bg-sage/10 rounded-xl px-4 py-3.5 mb-5 text-[0.82rem] text-ink leading-relaxed">
           <strong>Stages you will reach: </strong>
           {FASTING_STAGES.filter(s => s.startH < proto.targetH).map(s => s.name).join(' → ')}
         </div>
       )}
 
       {isExtended && (
-        <div style={{
-          background: 'rgba(240,201,122,0.18)', border: '1px solid rgba(240,201,122,0.5)',
-          borderRadius: '10px', padding: '12px 14px', marginBottom: '20px',
-          fontSize: '0.8rem', color: 'var(--ink)', lineHeight: 1.6,
-        }}>
+        <div className="bg-gold/20 border border-gold/50 rounded-[10px] px-3.5 py-3 mb-5 text-sm text-ink leading-relaxed">
           ⚠️ <strong>Extended fast.</strong> Ensure you are not diabetic, pregnant, or on medication requiring food. Stay hydrated with electrolytes. Break the fast gently.
         </div>
       )}
 
-      <button onClick={onStart} disabled={starting} style={{
-        width: '100%', padding: '16px', background: 'var(--sage)', color: 'white',
-        border: 'none', borderRadius: '14px', fontSize: '1rem', fontWeight: 600,
-        cursor: starting ? 'not-allowed' : 'pointer', opacity: starting ? 0.7 : 1,
-        transition: 'opacity 0.2s',
-      }}>
+      <button onClick={onStart} disabled={starting}
+        className={`w-full p-4 bg-sage text-white border-none rounded-2xl text-base font-semibold transition-opacity duration-200 ${
+          starting ? 'cursor-not-allowed opacity-70' : 'cursor-pointer opacity-100'
+        }`}>
         {starting ? 'Starting…' : 'Begin Fast'}
       </button>
     </div>
@@ -158,37 +140,29 @@ function ActiveScreen({
     : null;
 
   return (
-    <div style={{ padding: '24px 20px 100px', maxWidth: '480px', margin: '0 auto' }}>
+    <div className="px-5 pt-6 pb-24 max-w-md mx-auto">
 
       {/* Timer card */}
-      <div style={{
-        background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '16px',
-        boxShadow: '0 2px 12px rgba(46,59,43,0.07)', textAlign: 'center',
-      }}>
-        <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)', letterSpacing: '0.08em', marginBottom: '6px' }}>
+      <div className="bg-white rounded-2xl p-5 mb-4 shadow-[0_2px_12px_rgba(46,59,43,0.07)] text-center">
+        <div className="text-[0.78rem] text-ink-soft tracking-wider mb-1.5">
           {protocol} FAST IN PROGRESS
         </div>
-        <div style={{
-          fontFamily: 'var(--font-jetbrains), monospace',
-          fontSize: '2.8rem', fontWeight: 700, color: 'var(--ink)',
-          letterSpacing: '0.04em', lineHeight: 1, marginBottom: '16px',
-        }}>
+        <div className="font-mono text-[2.8rem] font-bold text-ink tracking-wide leading-none mb-4">
           {fmtElapsed(elapsed)}
         </div>
 
         {targetH > 0 && (
           <>
-            <div style={{
-              height: '6px', background: 'rgba(139,175,124,0.2)',
-              borderRadius: '3px', overflow: 'hidden', marginBottom: '8px',
-            }}>
-              <div style={{
-                height: '100%', width: `${progressPct}%`,
-                background: progressPct >= 100 ? '#8BAF7C' : 'linear-gradient(90deg,#A8C4E8,#8BAF7C)',
-                borderRadius: '3px', transition: 'width 1s linear',
-              }} />
+            <div className="h-1.5 bg-sage/20 rounded-[3px] overflow-hidden mb-2">
+              <div
+                className="h-full rounded-[3px] transition-[width] duration-1000 ease-linear"
+                style={{
+                  width: `${progressPct}%`,
+                  background: progressPct >= 100 ? '#8BAF7C' : 'linear-gradient(90deg,#A8C4E8,#8BAF7C)',
+                }}
+              />
             </div>
-            <div style={{ fontSize: '0.78rem', color: 'var(--ink-soft)' }}>
+            <div className="text-[0.78rem] text-ink-soft">
               {progressPct >= 100
                 ? `✓ ${targetH}h target reached`
                 : `${fmtHM(remainingMin)} to ${targetH}h target`}
@@ -197,14 +171,10 @@ function ActiveScreen({
         )}
       </div>
 
-      {/* Next-stage countdown — P1.30 */}
+      {/* Next-stage countdown */}
       {nextStageInMin !== null && nextStageInMin > 0 && (
-        <div style={{
-          background: 'rgba(168,196,232,0.15)', border: '1px solid rgba(168,196,232,0.4)',
-          borderRadius: '10px', padding: '10px 14px', marginBottom: '14px',
-          fontSize: '0.82rem', color: 'var(--ink)', display: 'flex', alignItems: 'center', gap: '8px',
-        }}>
-          <span style={{ fontSize: '1rem' }}>{nextStage!.emoji}</span>
+        <div className="bg-[#A8C4E8]/15 border border-[#A8C4E8]/40 rounded-[10px] px-3.5 py-2.5 mb-3.5 text-[0.82rem] text-ink flex items-center gap-2">
+          <span className="text-base">{nextStage!.emoji}</span>
           <span>
             <strong>{nextStage!.name}</strong> begins in{' '}
             <strong>{fmtHM(nextStageInMin)}</strong>
@@ -212,23 +182,20 @@ function ActiveScreen({
         </div>
       )}
 
-      {/* Stage card — P1.29, fades in on transition (P1.31) */}
+      {/* Stage card */}
       <FastStageCard key={stage.index} stage={stage} isNew={isNew} />
 
-      <button onClick={onEnd} disabled={ending} style={{
-        width: '100%', marginTop: '20px', padding: '14px',
-        background: 'transparent', border: '2px solid rgba(220,80,60,0.35)',
-        borderRadius: '12px', color: 'rgba(220,80,60,0.8)',
-        fontSize: '0.9rem', fontWeight: 600,
-        cursor: ending ? 'not-allowed' : 'pointer', opacity: ending ? 0.6 : 1, transition: 'all 0.2s',
-      }}>
+      <button onClick={onEnd} disabled={ending}
+        className={`w-full mt-5 py-3.5 bg-transparent border-2 border-[rgba(220,80,60,0.35)] rounded-xl text-[rgba(220,80,60,0.8)] text-[0.9rem] font-semibold transition-all duration-200 ${
+          ending ? 'cursor-not-allowed opacity-60' : 'cursor-pointer opacity-100'
+        }`}>
         {ending ? 'Ending fast…' : 'End Fast'}
       </button>
     </div>
   );
 }
 
-// ─── end-of-fast summary — P1.34 ─────────────────────────────────────────────
+// ─── end-of-fast summary ─────────────────────────────────────────────
 
 function SummaryScreen({ fast, onNewFast }: { fast: EndedFast; onNewFast: () => void }) {
   const stage = FASTING_STAGES.find(s => s.index === fast.maxStageReached) ?? FASTING_STAGES[0];
@@ -236,42 +203,31 @@ function SummaryScreen({ fast, onNewFast }: { fast: EndedFast; onNewFast: () => 
   const m = Math.round((fast.durationHours - h) * 60);
 
   return (
-    <div style={{ padding: '24px 20px 100px', maxWidth: '480px', margin: '0 auto' }}>
-      <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-        <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🌿</div>
-        <div style={{
-          fontFamily: 'var(--font-dm-serif), Georgia, serif',
-          fontSize: '1.7rem', color: 'var(--ink)', marginBottom: '6px',
-        }}>Fast Complete</div>
-        <div style={{ fontSize: '0.85rem', color: 'var(--ink-soft)' }}>
+    <div className="px-5 pt-6 pb-24 max-w-md mx-auto">
+      <div className="text-center mb-6">
+        <div className="text-5xl mb-2">🌿</div>
+        <div className="font-serif text-[1.7rem] text-ink mb-1.5">Fast Complete</div>
+        <div className="text-[0.85rem] text-ink-soft">
           Your body did real work. This counts.
         </div>
       </div>
 
-      <div style={{
-        background: 'white', borderRadius: '16px', padding: '20px', marginBottom: '16px',
-        boxShadow: '0 2px 12px rgba(46,59,43,0.07)',
-        display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px', textAlign: 'center',
-      }}>
+      <div className="bg-white rounded-2xl p-5 mb-4 shadow-[0_2px_12px_rgba(46,59,43,0.07)] grid grid-cols-3 gap-3 text-center">
         {[
           { label: 'Duration', value: h > 0 ? `${h}h ${m}m` : `${m}m` },
           { label: 'Protocol', value: fast.protocol },
           { label: 'Peak stage', value: `${stage.emoji} ${stage.name}` },
         ].map(stat => (
           <div key={stat.label}>
-            <div style={{ fontSize: '0.72rem', color: 'var(--ink-soft)', marginBottom: '4px' }}>{stat.label}</div>
-            <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--ink)' }}>{stat.value}</div>
+            <div className="text-[0.72rem] text-ink-soft mb-1">{stat.label}</div>
+            <div className="text-[0.9rem] font-bold text-ink">{stat.value}</div>
           </div>
         ))}
       </div>
 
       <FastStageCard stage={stage} />
 
-      <div style={{
-        background: 'rgba(139,175,124,0.1)', borderRadius: '12px',
-        padding: '14px 16px', marginTop: '16px', fontSize: '0.82rem',
-        color: 'var(--ink)', lineHeight: 1.65,
-      }}>
+      <div className="bg-sage/10 rounded-xl px-4 py-3.5 mt-4 text-[0.82rem] text-ink leading-relaxed">
         <strong>Refeeding: </strong>
         {fast.durationHours >= 24
           ? 'Break with small, easy-to-digest foods — bone broth, cooked vegetables, a little protein. Avoid a large meal for the first hour.'
@@ -280,11 +236,8 @@ function SummaryScreen({ fast, onNewFast }: { fast: EndedFast; onNewFast: () => 
           : 'Your digestive system is ready. Prefer a balanced, protein-rich first meal.'}
       </div>
 
-      <button onClick={onNewFast} style={{
-        width: '100%', marginTop: '20px', padding: '14px', background: 'var(--sage)',
-        color: 'white', border: 'none', borderRadius: '12px',
-        fontSize: '0.95rem', fontWeight: 600, cursor: 'pointer',
-      }}>
+      <button onClick={onNewFast}
+        className="w-full mt-5 py-3.5 bg-sage text-white border-none rounded-xl text-[0.95rem] font-semibold cursor-pointer">
         Start another fast
       </button>
     </div>
@@ -313,7 +266,6 @@ export default function FastPage() {
     if (timerRef.current) { clearInterval(timerRef.current); timerRef.current = null; }
   }
 
-  // Hydrate from DB on mount — survives page refresh (P1.27)
   useEffect(() => {
     (async () => {
       try {
@@ -376,7 +328,7 @@ export default function FastPage() {
       reset();
       setScreen('summary');
     } catch {
-      startTimer(); // resume if save failed
+      startTimer();
     } finally {
       setEnding(false);
     }
@@ -389,13 +341,15 @@ export default function FastPage() {
   })();
 
   if (screen === 'loading') return (
-    <div style={{
-      display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', minHeight: '60vh', gap: '12px',
-      color: 'var(--ink-soft)', fontSize: '0.85rem',
-    }}>
-      <div style={{ fontSize: '2rem', animation: 'subtlePulse 2s ease-in-out infinite' }}>⏱</div>
+    <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3 text-ink-soft text-[0.85rem]">
+      <div className="text-[2rem] animate-[subtlePulse_2s_ease-in-out_infinite]">⏱</div>
       Checking your fast…
+      <style>{`
+        @keyframes subtlePulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
   );
 
