@@ -65,6 +65,12 @@ export default async function ProfilePage() {
         ))}
       </div>
 
+      {/* Blood test upload */}
+      <Link href="/blood-test"
+        className="block text-center bg-white border border-sage rounded-card py-[13px] text-[0.88rem] font-semibold text-sage no-underline shadow-card mb-3">
+        Upload Blood Test →
+      </Link>
+
       {/* Edit link */}
       <Link href="/onboarding/basic-info"
         className="block text-center bg-sage text-white rounded-card py-[13px] text-[0.88rem] font-semibold no-underline shadow-card">

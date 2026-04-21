@@ -1,14 +1,20 @@
 /**
  * vaidya-proxy.js — Cloudflare Worker
- * Proxies Gemini 2.5 Flash calls for the Chethana Vaidya AI with SSE streaming.
+ * Proxies Gemini 2.5 Flash calls for the Chethana Vaidya AI.
+ *
+ * Supports two modes via request body field `stream` (boolean, default true):
+ *   stream: true  → streamGenerateContent?alt=sse (SSE, for conversational Vaidya)
+ *   stream: false → generateContent (JSON, for blood test extraction + meal analysis)
  *
  * Secrets (set via: npx wrangler secret put <NAME> --config ai-worker/wrangler.toml):
  *   GEMINI_API_KEY — Google AI Studio API key
  *   WORKER_SECRET  — shared secret; Chethana Next.js server sends this as Authorization header
  */
 
-const GEMINI_MODEL      = 'gemini-2.5-flash';
-const GEMINI_STREAM_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:streamGenerateContent?alt=sse`;
+const GEMINI_MODEL  = 'gemini-2.5-flash';
+const BASE_URL      = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}`;
+const STREAM_URL    = `${BASE_URL}:streamGenerateContent?alt=sse`;
+const JSON_URL      = `${BASE_URL}:generateContent`;
 
 const ALLOWED_ORIGINS = [
   'https://chethana.pradeepjainbp.in',
@@ -88,13 +94,29 @@ export default {
       });
     }
 
-    // Forward to Gemini streaming endpoint
-    const geminiRes = await fetch(`${GEMINI_STREAM_URL}&key=${env.GEMINI_API_KEY}`, {
+    // Separate the stream flag from the Gemini request body
+    const { stream: useStream = true, ...geminiBody } = body;
+
+    const geminiUrl = useStream
+      ? `${STREAM_URL}&key=${env.GEMINI_API_KEY}`
+      : `${JSON_URL}?key=${env.GEMINI_API_KEY}`;
+
+    const geminiRes = await fetch(geminiUrl, {
       method:  'POST',
       headers: { 'Content-Type': 'application/json' },
-      body:    JSON.stringify(body),
+      body:    JSON.stringify(geminiBody),
     });
 
+    if (!useStream) {
+      // Non-streaming: wait for full JSON response (used by extraction + meal analysis)
+      const data = await geminiRes.json();
+      return new Response(JSON.stringify(data), {
+        status:  geminiRes.status,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    // Streaming: check for upstream errors before piping
     if (!geminiRes.ok) {
       const errText = await geminiRes.text();
       return new Response(JSON.stringify({ error: 'Gemini error', detail: errText }), {
@@ -103,7 +125,7 @@ export default {
       });
     }
 
-    // Pipe the SSE stream directly back — no buffering
+    // Pipe SSE stream directly back — no buffering
     return new Response(geminiRes.body, {
       status:  200,
       headers: {

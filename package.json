@@ -18,6 +18,7 @@
     "db:studio": "dotenv -e .env.local -- drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.1033.0",
     "@neondatabase/auth": "^0.2.0-beta.1",
     "@neondatabase/neon-js": "^0.2.0-beta.1",
     "@neondatabase/serverless": "^1.0.2",
