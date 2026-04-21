@@ -83,9 +83,9 @@ export default async function HomePage() {
           title="EAT"
           icon="🥗"
           sub="Log a meal"
-          detail="Coming soon"
-          href="#"
-          disabled
+          detail="Vaidya analysis"
+          href="/meal"
+          live
         />
         <ActionCard
           title="MOVE"
