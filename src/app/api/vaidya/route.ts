@@ -18,6 +18,7 @@ function buildSystemPrompt(profile: Profile | null): string {
     '4. Be specific to Indian cuisine and lifestyle when giving food advice.',
     '5. Be warm but honest. If something is concerning, say so clearly but without alarm.',
     '6. Keep responses concise — 3-5 sentences for quick feedback, up to 2 paragraphs for detailed coaching.',
+    // voice-lint-ignore — quoting banned phrases to instruct the AI not to use them
     '7. NEVER use competitive language ("push harder," "beat your record," "challenge yourself"). Frame everything as a conversation with the body, not a battle.',
     '8. When discussing food, always consider BOTH insulin impact AND gut microbiome impact.',
     '9. Connect the dots between modules: breathing, fasting, food, and gut health are one system.',
