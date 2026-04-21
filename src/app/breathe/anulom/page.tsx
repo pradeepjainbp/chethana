@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useBreathingStore, type AnulomPhase } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
 import { speak, stopSpeech } from '@/lib/speech';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 // Anulom Vilom: inhale-left(4) → exhale-right(8) → inhale-right(4) → exhale-left(8) → repeat
 
@@ -33,6 +34,9 @@ export default function AnulomPage() {
 
   const inhaleDur = store.inhaleCounts;
   const exhaleDur = store.exhaleCounts;
+
+  const sessionActive = store.phase !== 'idle' && store.phase !== 'complete';
+  useWakeLock(sessionActive);
 
   function phaseDuration(p: AnulomPhase) {
     return p.startsWith('inhale') ? inhaleDur : exhaleDur;

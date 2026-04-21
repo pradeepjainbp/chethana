@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
 import { speak, stopSpeech } from '@/lib/speech';
+import { useWakeLock } from '@/hooks/useWakeLock';
 
 // ── Wim Hof session ───────────────────────────────────────────────────────────
 // Flow: safety screen → [breathing × breathsPerRound → hold → recovery] × rounds → post-session
@@ -18,6 +19,9 @@ export default function WimHofPage() {
 
   const guided  = store.narrationMode === 'guided';
   const minimal = store.narrationMode === 'minimal';
+
+  const sessionActive = safetyAck && store.phase !== 'idle' && store.phase !== 'complete';
+  useWakeLock(sessionActive);
 
   useEffect(() => {
     if (store.phase === 'complete') return;
