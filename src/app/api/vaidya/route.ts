@@ -1,55 +1,9 @@
 import { auth } from '@/lib/server-auth';
 import { userScoped } from '@/db/scoped';
 import { profiles } from '@/db/schema';
-import type { InferSelectModel } from 'drizzle-orm';
+import { buildSystemPrompt } from '@/prompts/vaidya';
 
 export const dynamic = 'force-dynamic';
-
-type Profile = InferSelectModel<typeof profiles>;
-
-function buildSystemPrompt(profile: Profile | null): string {
-  const lines = [
-    'You are the Vaidya — a calm, knowledgeable health guide within the Chethana app.',
-    '',
-    'YOUR RULES:',
-    '1. NEVER diagnose. Say "your numbers suggest" or "this may indicate" — never "you have."',
-    '2. NEVER prescribe medication or tell users to stop medication. Always say "discuss with your doctor."',
-    '3. Always explain WHY — the physiological reason behind every recommendation. Cover metabolism, hormones, gut microbiome, and psychology.',
-    '4. Be specific to Indian cuisine and lifestyle when giving food advice.',
-    '5. Be warm but honest. If something is concerning, say so clearly but without alarm.',
-    '6. Keep responses concise — 3-5 sentences for quick feedback, up to 2 paragraphs for detailed coaching.',
-    // voice-lint-ignore — quoting banned phrases to instruct the AI not to use them
-    '7. NEVER use competitive language ("push harder," "beat your record," "challenge yourself"). Frame everything as a conversation with the body, not a battle.',
-    '8. When discussing food, always consider BOTH insulin impact AND gut microbiome impact.',
-    '9. Connect the dots between modules: breathing, fasting, food, and gut health are one system.',
-  ];
-
-  if (profile) {
-    lines.push('', "THE USER'S PROFILE:");
-    if (profile.name)    lines.push(`Name: ${profile.name}`);
-    if (profile.age)     lines.push(`Age: ${profile.age}`);
-    if (profile.sex)     lines.push(`Sex: ${profile.sex}`);
-
-    if (profile.heightCm && profile.weightKg) {
-      const h   = parseFloat(profile.heightCm) / 100;
-      const bmi = (parseFloat(profile.weightKg) / (h * h)).toFixed(1);
-      lines.push(`BMI: ${bmi} (height ${profile.heightCm} cm, weight ${profile.weightKg} kg)`);
-    }
-
-    if (profile.goals?.length)
-      lines.push(`Health goals: ${profile.goals.join(', ')}`);
-    if (profile.dietaryPreference)
-      lines.push(`Dietary preference: ${profile.dietaryPreference}`);
-    if (profile.knownConditions?.length)
-      lines.push(`Known conditions: ${profile.knownConditions.join(', ')}`);
-    if (profile.activityLevel)
-      lines.push(`Activity level: ${profile.activityLevel}`);
-    if (profile.prakriti)
-      lines.push(`Ayurvedic Prakriti: ${profile.prakriti}`);
-  }
-
-  return lines.join('\n');
-}
 
 export async function POST(request: Request) {
   const { data: session } = await auth.getSession();
@@ -81,7 +35,6 @@ export async function POST(request: Request) {
     });
   }
 
-  // Fetch profile to inject context into the system prompt
   const scoped = userScoped(session.user.id);
   const [profile] = await scoped.select(profiles).limit(1);
 
@@ -93,16 +46,16 @@ export async function POST(request: Request) {
       { role: 'user', parts: [{ text: prompt }] },
     ],
     generationConfig: {
-      temperature:      0.7,
-      maxOutputTokens:  1024,
+      temperature:     0.7,
+      maxOutputTokens: 1024,
     },
   };
 
   const workerRes = await fetch(workerUrl, {
     method:  'POST',
     headers: {
-      'Content-Type':  'application/json',
-      Authorization:   `Bearer ${workerSecret}`,
+      'Content-Type': 'application/json',
+      Authorization:  `Bearer ${workerSecret}`,
     },
     body: JSON.stringify(geminiBody),
   });
@@ -115,7 +68,6 @@ export async function POST(request: Request) {
     });
   }
 
-  // Pipe SSE stream directly to the browser — no buffering
   return new Response(workerRes.body, {
     status:  200,
     headers: {
