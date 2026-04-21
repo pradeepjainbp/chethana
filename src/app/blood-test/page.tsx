@@ -198,8 +198,12 @@ export default function BloodTestPage() {
         <p className="text-[0.82rem] text-ink-soft mb-8 text-center">
           Your blood test values have been recorded. The Vaidya will use them to personalise your guidance.
         </p>
+        <button onClick={() => router.push('/blood-test/interpret')}
+          className="py-3.5 px-10 rounded-2xl bg-sage text-white text-[0.95rem] font-semibold border-none cursor-pointer mb-3">
+          View interpretation →
+        </button>
         <button onClick={() => router.push('/profile')}
-          className="py-3.5 px-10 rounded-2xl bg-sage text-white text-[0.95rem] font-semibold border-none cursor-pointer">
+          className="py-2 px-6 rounded-2xl text-ink-soft text-[0.82rem] font-medium border-none cursor-pointer bg-transparent">
           Back to Profile
         </button>
       </div>

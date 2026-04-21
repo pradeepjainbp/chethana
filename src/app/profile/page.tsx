@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/server-auth';
 import { userScoped } from '@/db/scoped';
-import { profiles } from '@/db/schema';
+import { profiles, bloodTests } from '@/db/schema';
+import { desc } from 'drizzle-orm';
 import LogoutButton from '@/components/LogoutButton';
 
 export const dynamic = 'force-dynamic';
@@ -13,6 +14,7 @@ export default async function ProfilePage() {
 
   const scoped = userScoped(session.user.id);
   const [profile] = await scoped.select(profiles).limit(1);
+  const [latestTest] = await scoped.select(bloodTests).orderBy(desc(bloodTests.createdAt)).limit(1);
 
   const name = profile?.name ?? session.user.name ?? '';
   const email = session.user.email ?? '';
@@ -65,10 +67,16 @@ export default async function ProfilePage() {
         ))}
       </div>
 
-      {/* Blood test upload */}
+      {/* Blood test */}
+      {latestTest && (
+        <Link href="/blood-test/interpret"
+          className="block text-center bg-white border border-sage rounded-card py-[13px] text-[0.88rem] font-semibold text-sage no-underline shadow-card mb-3">
+          View Blood Test →
+        </Link>
+      )}
       <Link href="/blood-test"
-        className="block text-center bg-white border border-sage rounded-card py-[13px] text-[0.88rem] font-semibold text-sage no-underline shadow-card mb-3">
-        Upload Blood Test →
+        className="block text-center bg-white border border-sage-light rounded-card py-[13px] text-[0.88rem] font-semibold text-ink-soft no-underline shadow-card mb-3">
+        {latestTest ? 'Upload New Test →' : 'Upload Blood Test →'}
       </Link>
 
       {/* Edit link */}
