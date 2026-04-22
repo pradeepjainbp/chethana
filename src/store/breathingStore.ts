@@ -2,7 +2,7 @@ import { create } from 'zustand';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
-export type Technique = 'wimhof' | 'anulom';
+export type Technique = 'wimhof' | 'anulom' | 'box' | 'kapalbhati' | 'bhramari' | 'om';
 export type NarrationMode = 'guided' | 'minimal' | 'silent';
 
 // Wim Hof phases
@@ -48,8 +48,22 @@ interface BreathingState {
   exhaleCounts:    number;  // default 8
   anulomRounds:    number;  // default 10
 
+  // Box breathing config
+  boxCount:        number;  // seconds per phase, default 4
+  boxRounds:       number;  // cycles, default 5
+
+  // Kapalbhati config
+  kapalbhatiPumps:  number; // pumps per round, default 60
+  kapalbhatiRounds: number; // rounds, default 3
+
+  // Bhramari config
+  bhramariCycles:  number;  // cycles, default 10
+
+  // Om config
+  omRounds:        number;  // rounds, default 5
+
   // Actions
-  configure:       (cfg: Partial<Pick<BreathingState, 'technique' | 'narrationMode' | 'totalRounds' | 'breathsPerRound' | 'inhaleCounts' | 'exhaleCounts' | 'anulomRounds'>>) => void;
+  configure:       (cfg: Partial<Pick<BreathingState, 'technique' | 'narrationMode' | 'totalRounds' | 'breathsPerRound' | 'inhaleCounts' | 'exhaleCounts' | 'anulomRounds' | 'boxCount' | 'boxRounds' | 'kapalbhatiPumps' | 'kapalbhatiRounds' | 'bhramariCycles' | 'omRounds'>>) => void;
   startSession:    () => void;
   nextPhase:       (phase: Phase) => void;
   tickBreath:      () => void;      // advance breathCount
@@ -80,6 +94,12 @@ export const useBreathingStore = create<BreathingState>((set, get) => ({
   inhaleCounts:    4,
   exhaleCounts:    8,
   anulomRounds:    10,
+  boxCount:        4,
+  boxRounds:       5,
+  kapalbhatiPumps:  60,
+  kapalbhatiRounds: 3,
+  bhramariCycles:  10,
+  omRounds:        5,
 
   configure: (cfg) => set((s) => ({ ...s, ...cfg })),
 

@@ -2,8 +2,9 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { auth } from '@/lib/server-auth';
 import LogoutButton from '@/components/LogoutButton';
+import VaidyaNoteAI from '@/components/VaidyaNoteAI';
 import { userScoped } from '@/db/scoped';
-import { profiles, waterLogs, fastingSessions } from '@/db/schema';
+import { profiles, waterLogs, fastingSessions, mealLogs } from '@/db/schema';
 import { gte, isNull } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
@@ -26,6 +27,18 @@ export default async function HomePage() {
     gte(waterLogs.loggedAt, todayStart),
   );
   const totalWaterMl = waterRows.reduce((s: number, r: { amountMl?: number | null }) => s + (r.amountMl ?? 0), 0);
+
+  // Plant diversity — last 7 days
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+  const mealRows = await scoped.selectFields(
+    { plantFoods: mealLogs.plantFoods },
+    mealLogs,
+    gte(mealLogs.loggedAt, sevenDaysAgo),
+  );
+  const uniquePlants = [...new Set(
+    (mealRows as { plantFoods?: string[] | null }[]).flatMap(m => m.plantFoods ?? [])
+  )];
+  const plantCount = uniquePlants.length;
 
   // Active fasting session
   const [activeFast] = await scoped.selectFields(
@@ -113,11 +126,14 @@ export default async function HomePage() {
         />
       </div>
 
+      {/* ── Plant diversity ──────────────────────────────────── */}
+      <PlantDiversityCard count={plantCount} />
+
       {/* ── Profile completion bar (P1.16) ───────────────────── */}
       <CompletionBar completion={completion} />
 
-      {/* ── Vaidya's Note (P1.17) ────────────────────────────── */}
-      <VaidyaNote userId={session.user.id} />
+      {/* ── Vaidya's Note (AI-generated, cached in sessionStorage) */}
+      <VaidyaNoteAI userId={session.user.id} />
     </div>
   );
 }
@@ -190,42 +206,33 @@ function CompletionBar({ completion }: { completion: number }) {
   );
 }
 
-// ── Vaidya's Note (P1.17) ────────────────────────────────────────────────────
+// ── Plant diversity card (P2.08) ─────────────────────────────────────────────
 
-const VAIDYA_NOTES = [
-  'Your body\'s healing intelligence never stops. Consistent 16-hour fasting windows let insulin drop and cells begin repair. Keep the rhythm.',
-  'Each breath is a message to your nervous system. Thirty Wim Hof cycles followed by a breath hold trains your body to handle stress with grace.',
-  'Your gut microbiome thrives on variety. Aim for 30 different plant foods this week — each one feeds a different bacterial species.',
-  'Fasting insulin below 5 is the goal. Every fasting window, every bout of movement, every fibre-rich meal moves that number quietly in the right direction.',
-  'Sleep is the most anabolic thing you can do. Growth hormone peaks in the first 90 minutes. Protect that window.',
-  'Waist-to-height ratio is a stronger predictor of metabolic risk than weight alone. Keep it below 0.5 — that is the single number worth watching.',
-  'Stress raises cortisol, cortisol raises blood sugar, elevated sugar raises insulin. Five minutes of slow nasal breathing breaks the cycle.',
-];
-
-function hashString(s: string) {
-  let h = 2166136261;
-  for (let i = 0; i < s.length; i++) {
-    h ^= s.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-function dayOfYear(d: Date) {
-  const start = Date.UTC(d.getUTCFullYear(), 0, 0);
-  return Math.floor((d.getTime() - start) / 86_400_000);
-}
-
-function VaidyaNote({ userId }: { userId: string }) {
-  const idx = (hashString(userId) + dayOfYear(new Date())) % VAIDYA_NOTES.length;
-  const note = VAIDYA_NOTES[idx];
+function PlantDiversityCard({ count }: { count: number }) {
+  const pct   = Math.min(count / 30, 1);
+  const color = count >= 30 ? '#8BAF7C' : count >= 20 ? '#A8C4E8' : count >= 10 ? '#F0C97A' : '#E8A8A8';
   return (
-    <div className="bg-sage/10 border border-sage-light rounded-card p-4 mb-3">
-      <div className="text-[0.65rem] font-bold tracking-[0.12em] text-sage-dark mb-2.5">
-        VAIDYA&apos;S NOTE
+    <div className="bg-white rounded-card p-4 shadow-card mb-3">
+      <div className="flex justify-between items-center mb-2">
+        <span className="text-[0.76rem] font-semibold text-ink-mid tracking-[0.04em]">
+          🌿 PLANT DIVERSITY · THIS WEEK
+        </span>
+        <span className="text-[0.82rem] font-bold" style={{ color }}>
+          {count}/30
+        </span>
       </div>
-      <p className="text-[0.88rem] text-ink-mid leading-relaxed italic">
-        &ldquo;{note}&rdquo;
+      <div className="h-[5px] bg-sage-light rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500 ease-out"
+          style={{ width: `${pct * 100}%`, background: color }}
+        />
+      </div>
+      <p className="text-[0.72rem] text-ink-soft mt-2">
+        {count === 0
+          ? 'Log a meal to start tracking plant variety.'
+          : count >= 30
+          ? '✓ 30-plant target hit. Exceptional gut diversity.'
+          : `${30 - count} more plants to reach the 30-plant target.`}
       </p>
     </div>
   );

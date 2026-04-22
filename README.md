@@ -1,36 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Chethana — Personal Health Companion
 
-## Getting Started
+> A calm, intelligent health app. Breathing · Fasting · Nutrition · Gut Health.
+> Live at [chethana.pradeepjainbp.in](https://chethana.pradeepjainbp.in)
 
-First, run the development server:
+---
+
+## Stack
+
+| Layer       | Choice                                      |
+|-------------|---------------------------------------------|
+| Framework   | Next.js 15 App Router + TypeScript          |
+| Styling     | Tailwind CSS + custom design tokens         |
+| Database    | Neon (Postgres 17) + Drizzle ORM            |
+| Auth        | Neon Auth (Better Auth) + Google OAuth      |
+| AI          | Gemini 2.5 Flash via Cloudflare Worker proxy|
+| File storage| Cloudflare R2 (blood test PDFs)             |
+| Hosting     | Cloudflare Pages (OpenNext adapter)         |
+| State       | Zustand (breathing sessions)                |
+
+---
+
+## Features — Build Status
+
+### Phase 0 — Visibility ✅
+- Coming-soon page, sandbox nav tab, subdomain live
+
+### Phase 1 — MVP ✅
+- Google OAuth sign-in (Neon Auth)
+- 6-step onboarding wizard (profile persisted to Neon)
+- Dashboard: greeting, action cards, profile completion bar
+- **Breathing engine**: Wim Hof + Anulom Vilom with TTS narration, Zustand store, session saving
+- **Fasting engine**: 11-stage tracker, protocol picker (12:12 → 24h → Custom), live countdown, chime on stage transition, summary card
+- **Water tracker**: SVG ring, quick-add buttons, daily log
+- Profile page, disclaimer, sign-out
+
+### Phase 2 — Intelligence ✅
+- Cloudflare Worker + Gemini 2.5 Flash proxy (rate-limited)
+- Blood test PDF upload → Gemini Vision extraction → verify → save; HOMA-IR + TG/HDL auto-calculated
+- Meal logging: free-text → Gemini → structured JSON (insulin impact, gut impact, plant foods, Vaidya feedback)
+- **Plant diversity tracker**: 7-day unique plant count (X/30) on dashboard
+- **Breathing techniques expanded**: Box (4-4-4-4) · Kapalbhati · Bhramari · Om — all with narration, BreathCircle, session saving
+- **AI Vaidya Note**: personalised daily note generated from 7-day activity; cached in sessionStorage (one Gemini call/day)
+- Improved singing bowl chime (3-layer detuned harmonic synthesis)
+
+### Phase 3 — Education & Depth (upcoming)
+- Educational micro-cards (Hunger / Fasting Science / Gut Health / Breathing)
+- Yoga Kiosk: 12 core asanas with metabolic prescriptions
+- Daily check-in + streak engine
+- Weekly health score across 5 pillars
+- Longitudinal blood test trend charts
+
+### Phase 4 — Audio & Voice (upcoming)
+- 268+ pre-recorded MP3 clips replacing Web Speech API
+- Chethana voice persona (Vaidya recordings)
+
+---
+
+## Local Development
 
 ```bash
+cp .env.local.example .env.local   # fill in Neon + Worker credentials
+npm install
+npm run db:migrate                  # apply Drizzle migrations to Neon
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Deployment
 
-## Learn More
+Push to `main` → GitHub Actions → Cloudflare Pages (via OpenNext adapter).
 
-To learn more about Next.js, take a look at the following resources:
+Secrets required in Cloudflare Pages:
+- `DATABASE_URL` — Neon connection string
+- `NEON_AUTH_SECRET` — from Neon Auth dashboard
+- `AI_WORKER_URL` — Cloudflare Worker URL
+- `AI_WORKER_SECRET` — shared secret for Worker auth
+- `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+---
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Security Notes
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- All DB queries go through `userScoped()` — row-level ownership enforced in app layer
+- Gemini API key lives only in Cloudflare Worker secrets (`wrangler secret put`)
+- `.env*` files are gitignored; never commit secrets

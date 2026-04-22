@@ -1,32 +1,45 @@
 'use client';
 
-import { type Phase } from '@/store/breathingStore';
-
 interface Props {
-  phase: Phase;
+  phase: string;
   elapsed: number;   // seconds elapsed in current phase
   duration: number;  // total seconds for this phase (0 = instant)
 }
 
 // Color + scale by phase
 const PHASE_STYLE: Record<string, { color: string; scale: number; label: string; pulse: boolean }> = {
-  idle:          { color: '#C9DBB9', scale: 0.65, label: 'Ready',    pulse: false },
-  breathing:     { color: '#A8C4E8', scale: 0.85, label: 'Breathe',  pulse: true  },
-  hold:          { color: '#F0C97A', scale: 0.72, label: 'Hold',     pulse: true  },
-  recovery:      { color: '#8BAF7C', scale: 0.92, label: 'Inhale & hold', pulse: false },
-  complete:      { color: '#C9DBB9', scale: 0.65, label: 'Done',     pulse: false },
-  'inhale-left': { color: '#A8C4E8', scale: 0.92, label: 'Inhale',   pulse: false },
-  'exhale-right':{ color: '#8BAF7C', scale: 0.55, label: 'Exhale',   pulse: false },
-  'inhale-right':{ color: '#A8C4E8', scale: 0.92, label: 'Inhale',   pulse: false },
-  'exhale-left': { color: '#8BAF7C', scale: 0.55, label: 'Exhale',   pulse: false },
+  idle:            { color: '#C9DBB9', scale: 0.65, label: 'Ready',       pulse: false },
+  breathing:       { color: '#A8C4E8', scale: 0.85, label: 'Breathe',     pulse: true  },
+  hold:            { color: '#F0C97A', scale: 0.72, label: 'Hold',        pulse: true  },
+  recovery:        { color: '#8BAF7C', scale: 0.92, label: 'Inhale & hold', pulse: false },
+  complete:        { color: '#C9DBB9', scale: 0.65, label: 'Done',        pulse: false },
+  'inhale-left':   { color: '#A8C4E8', scale: 0.92, label: 'Inhale',      pulse: false },
+  'exhale-right':  { color: '#8BAF7C', scale: 0.55, label: 'Exhale',      pulse: false },
+  'inhale-right':  { color: '#A8C4E8', scale: 0.92, label: 'Inhale',      pulse: false },
+  'exhale-left':   { color: '#8BAF7C', scale: 0.55, label: 'Exhale',      pulse: false },
+  // Box breathing
+  'inhale':        { color: '#A8C4E8', scale: 0.92, label: 'Inhale',      pulse: false },
+  'hold-in':       { color: '#A8C4E8', scale: 0.92, label: 'Hold',        pulse: true  },
+  'exhale':        { color: '#8BAF7C', scale: 0.55, label: 'Exhale',      pulse: false },
+  'hold-out':      { color: '#C9DBB9', scale: 0.55, label: 'Hold',        pulse: true  },
+  // Kapalbhati
+  'pumping':       { color: '#E8A8A8', scale: 0.85, label: 'Pump',        pulse: true  },
+  'resting':       { color: '#C9DBB9', scale: 0.65, label: 'Rest',        pulse: false },
+  // Bhramari
+  'hum':           { color: '#F0C97A', scale: 0.72, label: 'Hum',         pulse: true  },
+  // Om
+  'aaa':           { color: '#E8C4A8', scale: 0.88, label: 'Aaa…',        pulse: false },
+  'ooo':           { color: '#C4A8E8', scale: 0.78, label: 'Ooo…',        pulse: false },
+  'mmm':           { color: '#A8B4E8', scale: 0.68, label: 'Mmm…',        pulse: true  },
+  'silence-om':    { color: '#C9DBB9', scale: 0.60, label: 'Silence',     pulse: false },
 };
 
 export default function BreathCircle({ phase, elapsed, duration }: Props) {
   const style = PHASE_STYLE[phase] ?? PHASE_STYLE.idle;
   const progress = duration > 0 ? Math.min(elapsed / duration, 1) : 0;
 
-  const isInhale = phase === 'inhale-left' || phase === 'inhale-right' || phase === 'recovery';
-  const isExhale = phase === 'exhale-left' || phase === 'exhale-right';
+  const isInhale = phase === 'inhale-left' || phase === 'inhale-right' || phase === 'recovery' || phase === 'inhale' || phase === 'aaa' || phase === 'ooo';
+  const isExhale = phase === 'exhale-left' || phase === 'exhale-right' || phase === 'exhale' || phase === 'hum' || phase === 'mmm';
   let scale = style.scale;
   if (isInhale)  scale = 0.55 + progress * 0.4;
   if (isExhale)  scale = 0.95 - progress * 0.4;
