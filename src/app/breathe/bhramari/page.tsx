@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
-import { speak, stopSpeech } from '@/lib/speech';
+import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { audioEngine } from '@/lib/audioEngine';
+import { cue } from '@/lib/cue';
 
 // Bhramari: 4s inhale → 8s hum exhale — repeat bhramariCycles times
 
@@ -31,7 +33,7 @@ export default function BhramariPage() {
   useEffect(() => {
     if (store.technique !== 'bhramari') { router.replace('/breathe'); return; }
     const nm = store.narrationMode;
-    if (nm !== 'silent') speak('Find a comfortable seat. Close your eyes. We begin with a slow inhale.', 0.8);
+    if (nm !== 'silent') cue('F2_01');
     setTimeout(() => setStarted(true), nm !== 'silent' ? 4000 : 200);
   }, []); // eslint-disable-line
 
@@ -39,8 +41,8 @@ export default function BhramariPage() {
     if (!started || isComplete) return;
 
     const nm = store.narrationMode;
-    if (phase === 'inhale' && nm !== 'silent') speak('Inhale.', 0.8, 0.9);
-    if (phase === 'hum'    && nm !== 'silent') speak('Hmmm...', 0.75, 0.8);
+    if (phase === 'inhale' && nm !== 'silent') cue('F2_02');
+    if (phase === 'hum'    && nm !== 'silent') cue('F2_03');
 
     tickRef.current = setInterval(() => {
       setElapsed(e => {
@@ -50,7 +52,7 @@ export default function BhramariPage() {
             const done = completedCycles + 1;
             setCompletedCycles(done);
             if (done >= cycles) {
-              if (nm !== 'silent') speak('Beautiful. Rest in the stillness.', 0.78);
+              if (nm !== 'silent') cue('A7_02');
               setIsComplete(true);
               if (tickRef.current) clearInterval(tickRef.current);
               store.completeSession();
@@ -68,6 +70,7 @@ export default function BhramariPage() {
   }, [started, phase, completedCycles, isComplete]); // eslint-disable-line
 
   function handleStop() {
+    audioEngine.stop();
     stopSpeech();
     if (tickRef.current) clearInterval(tickRef.current);
     setIsComplete(true);

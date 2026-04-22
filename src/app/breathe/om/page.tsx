@@ -4,20 +4,16 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
-import { speak, stopSpeech } from '@/lib/speech';
+import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { audioEngine } from '@/lib/audioEngine';
+import { cue } from '@/lib/cue';
 
 // Om: Aaa (4s) → Ooo (4s) → Mmm (8s) → Silence (4s) → repeat
 
 type OmPhase = 'aaa' | 'ooo' | 'mmm' | 'silence-om';
 const CYCLE: OmPhase[] = ['aaa', 'ooo', 'mmm', 'silence-om'];
 const DURATIONS: Record<OmPhase, number> = { aaa: 4, ooo: 4, mmm: 8, 'silence-om': 4 };
-const PHASE_CUE: Record<OmPhase, string> = {
-  aaa:          'Aaa…',
-  ooo:          'Ooo…',
-  mmm:          'Mmm…',
-  'silence-om': '',
-};
 const PHASE_LABEL: Record<OmPhase, string> = {
   aaa:          'Aaa… (front of mouth)',
   ooo:          'Ooo… (mid-throat)',
@@ -44,7 +40,7 @@ export default function OmPage() {
   useEffect(() => {
     if (store.technique !== 'om') { router.replace('/breathe'); return; }
     const nm = store.narrationMode;
-    if (nm !== 'silent') speak('Find stillness. Close your eyes. We will chant Om together.', 0.78);
+    if (nm !== 'silent') cue('G1_01');
     setTimeout(() => setStarted(true), nm !== 'silent' ? 4000 : 200);
   }, []); // eslint-disable-line
 
@@ -52,7 +48,8 @@ export default function OmPage() {
     if (!started || isComplete) return;
 
     const nm = store.narrationMode;
-    if (nm !== 'silent' && PHASE_CUE[phase]) speak(PHASE_CUE[phase], 0.75, 0.85);
+    const PHASE_CLIP: Record<string, string> = { aaa:'G1_04', ooo:'G1_05', mmm:'G1_06' };
+    if (nm !== 'silent' && PHASE_CLIP[phase]) cue(PHASE_CLIP[phase]);
 
     tickRef.current = setInterval(() => {
       setElapsed(e => {
@@ -68,7 +65,7 @@ export default function OmPage() {
             const done = completedRounds + 1;
             setCompletedRounds(done);
             if (done >= totalRounds) {
-              if (nm !== 'silent') speak('Om. Session complete. Rest in the resonance.', 0.75);
+              if (nm !== 'silent') cue('G1_08');
               setIsComplete(true);
               if (tickRef.current) clearInterval(tickRef.current);
               store.completeSession();
@@ -84,6 +81,7 @@ export default function OmPage() {
   }, [started, phase, cycleIdx, completedRounds, isComplete]); // eslint-disable-line
 
   function handleStop() {
+    audioEngine.stop();
     stopSpeech();
     if (tickRef.current) clearInterval(tickRef.current);
     setIsComplete(true);

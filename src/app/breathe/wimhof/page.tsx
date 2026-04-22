@@ -4,24 +4,37 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
-import { speak, stopSpeech } from '@/lib/speech';
+import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { audioEngine } from '@/lib/audioEngine';
+import { useSessionCount } from '@/hooks/useSessionCount';
+import {
+  introQueue, breathingQueue, holdQueue, recoveryQueue, closeQueue,
+} from '@/lib/stitching/wimhofPhases';
 
 // ── Wim Hof session ───────────────────────────────────────────────────────────
 // Flow: safety screen → [breathing × breathsPerRound → hold → recovery] × rounds → post-session
 
 export default function WimHofPage() {
-  const router = useRouter();
-  const store  = useBreathingStore();
+  const router       = useRouter();
+  const store        = useBreathingStore();
+  const sessionCount = useSessionCount();
   const [safetyAck, setSafetyAck] = useState(false);
-  const tickRef  = useRef<ReturnType<typeof setInterval> | null>(null);
+  const tickRef   = useRef<ReturnType<typeof setInterval> | null>(null);
   const breathRef = useRef<ReturnType<typeof setInterval> | null>(null);
-
-  const guided  = store.narrationMode === 'guided';
-  const minimal = store.narrationMode === 'minimal';
 
   const sessionActive = safetyAck && store.phase !== 'idle' && store.phase !== 'complete';
   useWakeLock(sessionActive);
+
+  function phaseCfg() {
+    const s = useBreathingStore.getState();
+    return {
+      rounds:          s.totalRounds,
+      breathsPerRound: s.breathsPerRound,
+      sessionCount,
+      narrationMode:   s.narrationMode,
+    };
+  }
 
   useEffect(() => {
     if (store.phase === 'complete') return;
@@ -30,103 +43,90 @@ export default function WimHofPage() {
 
   useEffect(() => {
     if (!safetyAck || store.phase === 'idle' || store.phase === 'complete') return;
-
     tickRef.current = setInterval(() => store.tickPhase(), 1000);
-
-    return () => {
-      if (tickRef.current) clearInterval(tickRef.current);
-    };
+    return () => { if (tickRef.current) clearInterval(tickRef.current); };
   }, [safetyAck, store.phase]); // eslint-disable-line
 
+  // Breathing phase — visual tick + audio breathing queue per round
   useEffect(() => {
     if (store.phase !== 'breathing') {
       if (breathRef.current) { clearInterval(breathRef.current); breathRef.current = null; }
       return;
     }
-    breathRef.current = setInterval(() => {
-      const { breathCount, breathsPerRound, round, totalRounds, narrationMode } = useBreathingStore.getState();
-      const nextCount = breathCount + 1;
 
-      if (nextCount < breathsPerRound) {
-        useBreathingStore.getState().tickBreath();
-        const nm = narrationMode;
-        if (nm !== 'silent' && nextCount % 10 === 0) speak(`${nextCount}`);
-      } else {
-        useBreathingStore.getState().tickBreath();
+    // Play the breathing phase audio queue for this round
+    audioEngine.play(breathingQueue(store.round, phaseCfg()));
+
+    breathRef.current = setInterval(() => {
+      const { breathCount, breathsPerRound } = useBreathingStore.getState();
+      const nextCount = breathCount + 1;
+      useBreathingStore.getState().tickBreath();
+      if (nextCount >= breathsPerRound) {
         clearInterval(breathRef.current!);
         breathRef.current = null;
-        setTimeout(() => {
-          if (narrationMode !== 'silent') speak('Exhale fully… and hold.', 0.75);
-          useBreathingStore.getState().startHold();
-        }, 1800);
+        // breathingQueue already queued B3_01 ("exhale and hold") with a delay;
+        // we advance state after a pause so engine and visuals stay in sync
+        setTimeout(() => useBreathingStore.getState().startHold(), 4000);
       }
-      void round; void totalRounds;
     }, 2000);
-
-    if (guided) speak('Breathe in… and let go.', 0.85, 0.9);
 
     return () => { if (breathRef.current) clearInterval(breathRef.current); };
   }, [store.phase, store.round]); // eslint-disable-line
 
+  // Hold phase — play hold-phase audio queue (cancelled by audioEngine.stop() in handleEndHold)
   useEffect(() => {
     if (store.phase !== 'hold') return;
-    const nm = store.narrationMode;
+    audioEngine.play(holdQueue(store.round, phaseCfg()));
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    if (nm !== 'silent') {
-      timers.push(setTimeout(() => speak('Thirty seconds.', 0.75), 30_000));
-      timers.push(setTimeout(() => speak('One minute.', 0.75), 60_000));
-      timers.push(setTimeout(() => speak('One minute thirty.', 0.75), 90_000));
-      timers.push(setTimeout(() => speak('Two minutes.', 0.75), 120_000));
-    }
+    // Auto-end hold at 3 minutes
     const auto = setTimeout(() => {
       if (useBreathingStore.getState().phase === 'hold') handleEndHold();
     }, 180_000);
-    timers.push(auto);
-
-    return () => timers.forEach(clearTimeout);
+    return () => clearTimeout(auto);
   }, [store.phase]); // eslint-disable-line
 
+  // Recovery phase — play recovery queue then advance to next round or complete
   useEffect(() => {
     if (store.phase !== 'recovery') return;
-    const nm = store.narrationMode;
-    if (nm !== 'silent') speak('Breathe in deeply… hold for fifteen seconds.', 0.78);
+    const { round, totalRounds } = useBreathingStore.getState();
+    audioEngine.play(recoveryQueue(round, totalRounds, phaseCfg()));
 
     const t = setTimeout(() => {
-      const { round, totalRounds } = useBreathingStore.getState();
-      if (nm !== 'silent') speak('And release. Take a few normal breaths.', 0.78);
-      setTimeout(() => {
-        if (round < totalRounds) {
-          if (nm === 'guided') speak(`Round ${round + 1}.`, 0.85);
-          useBreathingStore.getState().nextPhase('breathing');
-          useBreathingStore.setState({ round: round + 1, breathCount: 0, phaseElapsed: 0 });
-        } else {
-          if (nm !== 'silent') speak('Well done. Take a moment before you open your eyes.', 0.78);
-          useBreathingStore.getState().completeSession();
-        }
-      }, 3000);
-    }, 15_000);
+      const s = useBreathingStore.getState();
+      if (s.round < s.totalRounds) {
+        useBreathingStore.getState().nextPhase('breathing');
+        useBreathingStore.setState({ round: s.round + 1, breathCount: 0, phaseElapsed: 0 });
+      } else {
+        audioEngine.play(closeQueue(phaseCfg()));
+        useBreathingStore.getState().completeSession();
+      }
+    }, 18_000); // 15s recovery hold + 3s buffer
 
     return () => clearTimeout(t);
   }, [store.phase]); // eslint-disable-line
 
   function handleStart() {
     setSafetyAck(true);
-    if (guided) speak('Let\'s begin. Find a comfortable position, lying down or sitting up.', 0.8);
-    else if (minimal) speak('Begin.', 0.85);
-    setTimeout(() => {
-      useBreathingStore.getState().startSession();
-      if (guided) speak(`Round 1. ${store.breathsPerRound} breaths.`, 0.85);
-    }, guided ? 4000 : 500);
+    const cfg = {
+      rounds:          store.totalRounds,
+      breathsPerRound: store.breathsPerRound,
+      sessionCount,
+      narrationMode:   store.narrationMode,
+    };
+    audioEngine.play(introQueue(cfg));
+    const delay = store.narrationMode === 'silent' ? 500 : 5000;
+    setTimeout(() => useBreathingStore.getState().startSession(), delay);
   }
 
   function handleEndHold() {
-    const nm = useBreathingStore.getState().narrationMode;
-    if (nm !== 'silent') speak('Good. You listened to your body.', 0.78);
-    useBreathingStore.getState().endHold();
+    audioEngine.stop(); // cancels remaining hold-phase clips
+    const s = useBreathingStore.getState();
+    audioEngine.play(recoveryQueue(s.round, s.totalRounds, phaseCfg()));
+    s.endHold();
   }
 
   function handleStop() {
+    audioEngine.stop();
     stopSpeech();
     if (tickRef.current)  clearInterval(tickRef.current);
     if (breathRef.current) clearInterval(breathRef.current);

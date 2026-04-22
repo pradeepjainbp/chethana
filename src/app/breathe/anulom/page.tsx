@@ -4,8 +4,10 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore, type AnulomPhase } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
-import { speak, stopSpeech } from '@/lib/speech';
+import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { audioEngine } from '@/lib/audioEngine';
+import { cue } from '@/lib/cue';
 
 // Anulom Vilom: inhale-left(4) → exhale-right(8) → inhale-right(4) → exhale-left(8) → repeat
 
@@ -46,7 +48,7 @@ export default function AnulomPage() {
     if (store.technique !== 'anulom') { router.replace('/breathe'); return; }
     if (store.phase === 'idle') {
       const nm = store.narrationMode;
-      if (nm !== 'silent') speak('Find a comfortable seat. We begin with the left nostril.', 0.8);
+      if (nm !== 'silent') cue('C1_04');
       setTimeout(() => {
         useBreathingStore.getState().startSession();
       }, nm !== 'silent' ? 3500 : 200);
@@ -70,16 +72,16 @@ export default function AnulomPage() {
           setCompletedCycles(done);
           if (done >= s.anulomRounds) {
             const nm = s.narrationMode;
-            if (nm !== 'silent') speak('Beautiful. Session complete.', 0.78);
+            if (nm !== 'silent') cue('A7_01');
             s.completeSession();
             return;
           }
-          if (s.narrationMode !== 'silent' && done % 3 === 0) {
-            speak(`${done} cycles complete. Continue.`, 0.82);
-          }
+          if (s.narrationMode !== 'silent' && done % 3 === 0) cue('C2_09');
         } else if (s.narrationMode !== 'silent') {
-          if (nextPhase === 'exhale-right' || nextPhase === 'exhale-left') speak('Exhale.', 0.8, 0.85);
-          else speak('Inhale.', 0.8, 0.85);
+          if (nextPhase === 'exhale-right') cue('C2_04');
+          else if (nextPhase === 'exhale-left') cue('C2_07');
+          else if (nextPhase === 'inhale-right') cue('C2_05');
+          else cue('C2_02');
         }
 
         s.nextPhase(nextPhase);
@@ -92,6 +94,7 @@ export default function AnulomPage() {
   }, [store.phase, cycleIdx, completedCycles]); // eslint-disable-line
 
   function handleStop() {
+    audioEngine.stop();
     stopSpeech();
     if (tickRef.current) clearInterval(tickRef.current);
     store.completeSession();

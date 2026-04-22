@@ -3,8 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore } from '@/store/breathingStore';
-import { speak, stopSpeech } from '@/lib/speech';
+import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { audioEngine } from '@/lib/audioEngine';
+import { cue } from '@/lib/cue';
 
 type KaPhase = 'idle' | 'pumping' | 'resting' | 'complete';
 
@@ -32,7 +34,7 @@ export default function KapalbhatiPage() {
 
   function startPumping(r: number) {
     const nm = store.narrationMode;
-    if (nm !== 'silent') speak(`Round ${r}. Begin.`, 0.85);
+    if (nm !== 'silent') cue('E2_01');
     setPhase('pumping');
     setPumpCount(0);
     let count = 0;
@@ -43,11 +45,11 @@ export default function KapalbhatiPage() {
       if (count >= pumps) {
         clearInterval(timerRef.current!);
         if (r < rounds) {
-          if (nm !== 'silent') speak('Rest. Breathe normally.', 0.78);
+          if (nm !== 'silent') cue('E2_06');
           setPhase('resting');
           startRest(r);
         } else {
-          if (nm !== 'silent') speak('Session complete. Rest deeply.', 0.78);
+          if (nm !== 'silent') cue('A7_01');
           setPhase('complete');
           store.completeSession();
         }
@@ -77,6 +79,7 @@ export default function KapalbhatiPage() {
   }
 
   function handleStop() {
+    audioEngine.stop();
     stopSpeech();
     if (timerRef.current) clearInterval(timerRef.current);
     setPhase('complete');

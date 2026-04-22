@@ -4,17 +4,19 @@ import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
-import { speak, stopSpeech } from '@/lib/speech';
+import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { audioEngine } from '@/lib/audioEngine';
+import { cue } from '@/lib/cue';
 
 type BoxPhase = 'inhale' | 'hold-in' | 'exhale' | 'hold-out';
 
 const CYCLE: BoxPhase[] = ['inhale', 'hold-in', 'exhale', 'hold-out'];
-const PHASE_CUE: Record<BoxPhase, string> = {
-  'inhale':   'Inhale.',
-  'hold-in':  'Hold.',
-  'exhale':   'Exhale.',
-  'hold-out': 'Hold.',
+const PHASE_CLIP: Record<BoxPhase, string> = {
+  'inhale':   'D2_01',
+  'hold-in':  'D2_02',
+  'exhale':   'D2_03',
+  'hold-out': 'D2_04',
 };
 
 export default function BoxPage() {
@@ -37,14 +39,14 @@ export default function BoxPage() {
   useEffect(() => {
     if (store.technique !== 'box') { router.replace('/breathe'); return; }
     const nm = store.narrationMode;
-    if (nm !== 'silent') speak('Find a comfortable position. We\'ll breathe in a steady square rhythm.', 0.8);
+    if (nm !== 'silent') cue('D1_01');
     setTimeout(() => setStarted(true), nm !== 'silent' ? 3500 : 200);
   }, []); // eslint-disable-line
 
   useEffect(() => {
     if (!started || isComplete) return;
 
-    if (store.narrationMode !== 'silent') speak(PHASE_CUE[phase], 0.85);
+    if (store.narrationMode !== 'silent') cue(PHASE_CLIP[phase]);
 
     tickRef.current = setInterval(() => {
       setElapsed(e => {
@@ -59,7 +61,7 @@ export default function BoxPage() {
             const done = completedCycles + 1;
             setCompletedCycles(done);
             if (done >= cycles) {
-              if (store.narrationMode !== 'silent') speak('Beautiful. Session complete.', 0.78);
+              if (store.narrationMode !== 'silent') cue('A7_01');
               setIsComplete(true);
               if (tickRef.current) clearInterval(tickRef.current);
               store.completeSession();
@@ -75,6 +77,7 @@ export default function BoxPage() {
   }, [started, phase, cycleIdx, completedCycles, isComplete]); // eslint-disable-line
 
   function handleStop() {
+    audioEngine.stop();
     stopSpeech();
     if (tickRef.current) clearInterval(tickRef.current);
     setIsComplete(true);
