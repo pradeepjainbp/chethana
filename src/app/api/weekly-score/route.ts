@@ -1,6 +1,6 @@
 import { auth } from '@/lib/server-auth';
 import { userScoped } from '@/db/scoped';
-import { breathingSessions, fastingSessions, mealLogs, waterLogs, dailyCheckins } from '@/db/schema';
+import { breathingSessions, fastingSessions, mealLogs, dailyCheckins } from '@/db/schema';
 import { and, gte, isNotNull } from 'drizzle-orm';
 
 export const dynamic = 'force-dynamic';
