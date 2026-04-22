@@ -2,6 +2,9 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import EduCardComponent from '@/components/EduCard';
+import ExploreDeeper from '@/components/ExploreDeeper';
+import { getCardsBySeries } from '@/data/eduCards';
 
 type InsImpact = 'low' | 'moderate' | 'high';
 type GutImpact = 'positive' | 'neutral' | 'concerning';
@@ -169,6 +172,19 @@ export default function MealPage() {
             </p>
           </div>
         )}
+
+        {/* Gut health edu card */}
+        {(() => {
+          const cards = getCardsBySeries('gut');
+          const card  = cards[plants.length % cards.length];
+          return card ? (
+            <div className="mb-5">
+              <p className="text-[0.63rem] font-semibold tracking-[0.1em] text-ink-soft mb-2">GUT HEALTH INSIGHT</p>
+              <EduCardComponent card={card} compact />
+              <ExploreDeeper href="/learn" label="Explore gut science →" />
+            </div>
+          ) : null;
+        })()}
 
         {/* Actions */}
         <button

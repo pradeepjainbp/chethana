@@ -10,6 +10,9 @@ import {
 } from '@/data/fastingStages';
 import FastStageCard from '@/components/FastStageCard';
 import { playChime } from '@/lib/chime';
+import EduCardComponent from '@/components/EduCard';
+import ExploreDeeper from '@/components/ExploreDeeper';
+import { getCardsBySeries } from '@/data/eduCards';
 
 type Screen = 'loading' | 'picker' | 'active' | 'summary';
 
@@ -235,6 +238,18 @@ function SummaryScreen({ fast, onNewFast }: { fast: EndedFast; onNewFast: () => 
           ? 'A handful of nuts, yogurt, or fruit before your main meal. Avoid eating a large meal immediately.'
           : 'Your digestive system is ready. Prefer a balanced, protein-rich first meal.'}
       </div>
+
+      {(() => {
+        const cards = getCardsBySeries('fasting');
+        const card  = cards[fast.maxStageReached % cards.length];
+        return card ? (
+          <div className="mt-4">
+            <p className="text-[0.68rem] font-bold tracking-[0.1em] text-ink-soft mb-2">THE SCIENCE BEHIND YOUR FAST</p>
+            <EduCardComponent card={card} compact />
+            <ExploreDeeper href="/learn" label="Explore fasting science →" />
+          </div>
+        ) : null;
+      })()}
 
       <button onClick={onNewFast}
         className="w-full mt-5 py-3.5 bg-sage text-white border-none rounded-xl text-[0.95rem] font-semibold cursor-pointer">
