@@ -6,6 +6,7 @@ import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
 import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { useAmbientSession } from '@/hooks/useAmbientSession';
 import { audioEngine } from '@/lib/audioEngine';
 import { cue } from '@/lib/cue';
 
@@ -36,6 +37,7 @@ export default function OmPage() {
   const totalRounds = store.omRounds;
 
   useWakeLock(started && !isComplete);
+  useAmbientSession(started && !isComplete, store.narrationMode);
 
   useEffect(() => {
     if (store.technique !== 'om') { router.replace('/breathe'); return; }

@@ -6,6 +6,7 @@ import { useBreathingStore, type AnulomPhase } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
 import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { useAmbientSession } from '@/hooks/useAmbientSession';
 import { audioEngine } from '@/lib/audioEngine';
 import { cue } from '@/lib/cue';
 
@@ -39,6 +40,7 @@ export default function AnulomPage() {
 
   const sessionActive = store.phase !== 'idle' && store.phase !== 'complete';
   useWakeLock(sessionActive);
+  useAmbientSession(sessionActive, store.narrationMode);
 
   function phaseDuration(p: AnulomPhase) {
     return p.startsWith('inhale') ? inhaleDur : exhaleDur;

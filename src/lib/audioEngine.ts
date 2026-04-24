@@ -2,6 +2,7 @@
 
 import { getAudioMode } from './audioMode';
 import { speakAndWait, stopSpeech } from './speech';
+import { ambientEngine } from './ambientEngine';
 import type { AudioClip } from '@/data/audioClips';
 
 export interface ClipEntry {
@@ -34,6 +35,8 @@ class AudioEngine {
       return;
     }
 
+    ambientEngine.duck();
+
     for (const entry of queue) {
       if (signal.aborted) break;
       if (entry.delayMs) await delay(entry.delayMs, signal);
@@ -48,6 +51,8 @@ class AudioEngine {
         await speakAndWait(clip.text, signal);
       }
     }
+
+    ambientEngine.unduck();
   }
 
   stop(): void {
@@ -56,6 +61,7 @@ class AudioEngine {
     this.current?.pause();
     this.current = null;
     stopSpeech();
+    ambientEngine.unduck();
   }
 
   preload(ids: string[], clips: Record<string, AudioClip>): void {

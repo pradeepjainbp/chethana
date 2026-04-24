@@ -6,6 +6,7 @@ import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
 import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { useAmbientSession } from '@/hooks/useAmbientSession';
 import { audioEngine } from '@/lib/audioEngine';
 import { useSessionCount } from '@/hooks/useSessionCount';
 import {
@@ -25,6 +26,7 @@ export default function WimHofPage() {
 
   const sessionActive = safetyAck && store.phase !== 'idle' && store.phase !== 'complete';
   useWakeLock(sessionActive);
+  useAmbientSession(sessionActive, store.narrationMode);
 
   function phaseCfg() {
     const s = useBreathingStore.getState();

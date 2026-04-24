@@ -6,6 +6,7 @@ import { useBreathingStore } from '@/store/breathingStore';
 import BreathCircle from '@/components/BreathCircle';
 import { stopSpeech } from '@/lib/speech';
 import { useWakeLock } from '@/hooks/useWakeLock';
+import { useAmbientSession } from '@/hooks/useAmbientSession';
 import { audioEngine } from '@/lib/audioEngine';
 import { cue } from '@/lib/cue';
 
@@ -29,6 +30,7 @@ export default function BhramariPage() {
   const cycles = store.bhramariCycles;
 
   useWakeLock(started && !isComplete);
+  useAmbientSession(started && !isComplete, store.narrationMode);
 
   useEffect(() => {
     if (store.technique !== 'bhramari') { router.replace('/breathe'); return; }
