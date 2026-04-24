@@ -4,6 +4,7 @@
 // queue cleanly when the user taps "Release".
 
 import type { ClipEntry } from '@/lib/audioEngine';
+import { pickFromPool } from '@/lib/clipTracker';
 
 export interface WimHofPhaseConfig {
   rounds:          number;
@@ -66,13 +67,12 @@ export function breathingQueue(round: number, cfg: Cfg): ClipEntry[] {
 
   // Every 10 breaths: count + physiology
   const pool = [...J1_POOL, ...(cfg.sessionCount > 3 ? J1_ADV : [])];
-  let j1 = (round - 1) * 3;
   const breathMilestones = [10, 20, 30, 40].filter(b => b < cfg.breathsPerRound);
   for (const b of breathMilestones) {
     const countId = `A2_${String(b).padStart(2,'0')}`;
     q.push(add(countId, 1500));
     if (!minimal(cfg)) {
-      q.push(add(pool[j1++ % pool.length], 500));
+      q.push(add(pickFromPool(pool), 500));
       if (b < cfg.breathsPerRound - 5) q.push(add('B2_05', 300));
     }
   }
@@ -96,18 +96,17 @@ export function holdQueue(round: number, cfg: Cfg): ClipEntry[] {
   const q: ClipEntry[] = [];
 
   // Patience clip immediately
-  q.push(add(M3_POOL[(round - 1) % M3_POOL.length], 3000));
+  q.push(add(pickFromPool(M3_POOL), 3000));
 
   // Time callouts at 30s, 1m, 1m30, 2m, 3m
   const timeMarkers: [number, string][] = [
     [25000,'A5_01'], [30000,'A5_02'], [30000,'A5_03'], [30000,'A5_04'], [60000,'A5_06'],
   ];
   const pool = [...J2_POOL, ...(cfg.sessionCount > 3 ? J2_ADV : [])];
-  let j2 = (round - 1) * 2;
 
   for (const [delay, clipId] of timeMarkers) {
     q.push(add(clipId, delay));
-    if (!minimal(cfg)) q.push(add(pool[j2++ % pool.length], 1000));
+    if (!minimal(cfg)) q.push(add(pickFromPool(pool), 1000));
   }
 
   // Permission to breathe (far out — user ends hold before this fires most of the time)
