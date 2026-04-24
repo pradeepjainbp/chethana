@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useBreathingStore, type Technique, type NarrationMode } from '@/store/breathingStore';
+import { useSessionCount } from '@/hooks/useSessionCount';
 
 // ── Technique metadata ────────────────────────────────────────────────────────
 
@@ -29,12 +30,21 @@ const WARNINGS: Partial<Record<Technique, string>> = {
   kapalbhati: '⚠ Avoid if pregnant, have hypertension, or recent abdominal surgery.',
 };
 
+// ── Personality tier ──────────────────────────────────────────────────────────
+
+function getTier(session: number): { label: string; icon: string; desc: string } {
+  if (session <= 7)  return { label: 'Teacher',   icon: '🌱', desc: `Session ${session} of 7` };
+  if (session <= 28) return { label: 'Coach',     icon: '🌿', desc: `Session ${session}` };
+  return                    { label: 'Companion', icon: '🪷', desc: `Session ${session}` };
+}
+
 // ── Picker ────────────────────────────────────────────────────────────────────
 
 export default function BreathePage() {
   const router = useRouter();
   const configure = useBreathingStore(s => s.configure);
   const reset     = useBreathingStore(s => s.reset);
+  const sessionCount = useSessionCount();
 
   const [tech,  setTech]  = useState<Technique>('wimhof');
   const [mode,  setMode]  = useState<NarrationMode>('guided');
@@ -73,10 +83,19 @@ export default function BreathePage() {
     router.push('/breathe/' + tech);
   }
 
+  const tier = getTier(sessionCount);
+
   return (
     <div className="bg-cream min-h-screen px-5 pt-7 pb-24">
       <h1 className="font-serif text-[1.6rem] text-ink mb-1">Breathe</h1>
-      <p className="text-[0.82rem] text-ink-soft mb-5">Choose a technique and begin.</p>
+      <div className="flex items-center justify-between mb-5">
+        <p className="text-[0.82rem] text-ink-soft">Choose a technique and begin.</p>
+        <span className="flex items-center gap-1 bg-white border border-[#E8EFE1] rounded-full px-2.5 py-1 shadow-[0_1px_4px_rgba(46,59,43,0.07)]">
+          <span className="text-[0.75rem]">{tier.icon}</span>
+          <span className="text-[0.7rem] font-semibold text-ink-mid">{tier.label}</span>
+          <span className="text-[0.65rem] text-ink-soft">· {tier.desc}</span>
+        </span>
+      </div>
 
       {/* Technique grid */}
       <div className="grid grid-cols-3 gap-2 mb-5">
