@@ -38,3 +38,5 @@ next-env.d.ts
 # cloudflare / opennext
 .open-next/
 .wrangler/
+# Added by code-review-graph
+.code-review-graph/

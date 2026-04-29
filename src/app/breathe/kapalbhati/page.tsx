@@ -160,7 +160,7 @@ export default function KapalbhatiPage() {
       </p>
 
       <button onClick={handleStop}
-        className="mt-10 bg-transparent border border-[#D5D9D2] rounded-xl py-2.5 px-6 text-ink-soft text-[0.8rem] cursor-pointer">
+        className="mt-10 bg-transparent border border-rose-200 rounded-xl py-2.5 px-6 text-rose-500 text-[0.8rem] cursor-pointer">
         End session
       </button>
     </div>

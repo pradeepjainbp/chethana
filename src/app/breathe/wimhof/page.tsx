@@ -178,7 +178,7 @@ export default function WimHofPage() {
     0;
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-b from-[#EFF6EA] to-cream-mid">
+    <div className="relative min-h-screen flex flex-col items-center justify-center px-6 py-5 bg-gradient-to-b from-[#EFF6EA] to-cream-mid">
       {/* Round / breath counter */}
       <div className="text-center mb-8">
         <p className="text-[0.72rem] font-semibold tracking-[0.12em] text-ink-soft">
@@ -207,18 +207,19 @@ export default function WimHofPage() {
          store.phase === 'recovery'  ? 'Deep inhale — hold 15 s' : ''}
       </p>
 
-      <div className="mt-10 flex flex-col gap-3 w-full max-w-[320px]">
-        {store.phase === 'hold' && (
+      {store.phase === 'hold' && (
+        <div className="mt-10 w-full max-w-[320px]">
           <button onClick={handleEndHold}
             className="w-full py-[15px] rounded-2xl border-none bg-[#F0C97A] text-ink text-[0.95rem] font-semibold cursor-pointer">
             Release →
           </button>
-        )}
-        <button onClick={handleStop}
-          className="bg-transparent border border-[#D5D9D2] rounded-xl py-2.5 text-ink-soft text-[0.8rem] cursor-pointer">
-          End session
-        </button>
-      </div>
+        </div>
+      )}
+
+      <button onClick={handleStop}
+        className="absolute bottom-8 bg-transparent border border-rose-200 rounded-xl py-2.5 px-8 text-rose-500 text-[0.8rem] cursor-pointer">
+        End session
+      </button>
     </div>
   );
 }

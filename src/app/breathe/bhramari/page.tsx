@@ -26,6 +26,7 @@ export default function BhramariPage() {
   const [elapsed,          setElapsed]          = useState(0);
   const [completedCycles,  setCompletedCycles]  = useState(0);
   const [isComplete,       setIsComplete]       = useState(false);
+  const initialCueFiredRef = useRef(false);
 
   const cycles = store.bhramariCycles;
 
@@ -39,12 +40,18 @@ export default function BhramariPage() {
     setTimeout(() => setStarted(true), nm !== 'silent' ? 4000 : 200);
   }, []); // eslint-disable-line
 
+  // Fire cue for the very first phase when session starts
+  useEffect(() => {
+    if (started && !isComplete && !initialCueFiredRef.current) {
+      initialCueFiredRef.current = true;
+      if (store.narrationMode !== 'silent') cue('F2_02');
+    }
+  }, [started]); // eslint-disable-line
+
   useEffect(() => {
     if (!started || isComplete) return;
 
     const nm = store.narrationMode;
-    if (phase === 'inhale' && nm !== 'silent') cue('F2_02');
-    if (phase === 'hum'    && nm !== 'silent') cue('F2_03');
 
     tickRef.current = setInterval(() => {
       setElapsed(e => {
@@ -63,6 +70,10 @@ export default function BhramariPage() {
           }
           setPhase(p => p === 'inhale' ? 'hum' : 'inhale');
           return 0;
+        }
+        // Pre-roll: cue for next phase 1 second before transition
+        if (e + 2 === dur && nm !== 'silent') {
+          cue(phase === 'inhale' ? 'F2_03' : 'F2_02');
         }
         return e + 1;
       });
@@ -103,7 +114,7 @@ export default function BhramariPage() {
       </div>
 
       <button onClick={handleStop}
-        className="mt-12 bg-transparent border border-[#D5D9D2] rounded-xl py-2.5 px-6 text-ink-soft text-[0.8rem] cursor-pointer">
+        className="mt-12 bg-transparent border border-rose-200 rounded-xl py-2.5 px-6 text-rose-500 text-[0.8rem] cursor-pointer">
         End session
       </button>
     </div>

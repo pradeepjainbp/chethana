@@ -31,6 +31,7 @@ export default function BoxPage() {
   const [cycleIdx,      setCycleIdx]      = useState(0);
   const [completedCycles, setCompletedCycles] = useState(0);
   const [isComplete,    setIsComplete]    = useState(false);
+  const initialCueFiredRef = useRef(false);
 
   const count  = store.boxCount;
   const cycles = store.boxRounds;
@@ -45,10 +46,16 @@ export default function BoxPage() {
     setTimeout(() => setStarted(true), nm !== 'silent' ? 3500 : 200);
   }, []); // eslint-disable-line
 
+  // Fire cue for the very first phase when session starts
+  useEffect(() => {
+    if (started && !isComplete && !initialCueFiredRef.current) {
+      initialCueFiredRef.current = true;
+      if (store.narrationMode !== 'silent') cue(PHASE_CLIP[phase]);
+    }
+  }, [started]); // eslint-disable-line
+
   useEffect(() => {
     if (!started || isComplete) return;
-
-    if (store.narrationMode !== 'silent') cue(PHASE_CLIP[phase]);
 
     tickRef.current = setInterval(() => {
       setElapsed(e => {
@@ -70,6 +77,11 @@ export default function BoxPage() {
             }
           }
           return 0;
+        }
+        // Pre-roll: cue for next phase 1 second before transition
+        if (e + 2 === count && store.narrationMode !== 'silent') {
+          const nextIdx = (cycleIdx + 1) % CYCLE.length;
+          cue(PHASE_CLIP[CYCLE[nextIdx]]);
         }
         return e + 1;
       });
@@ -107,7 +119,7 @@ export default function BoxPage() {
       </div>
 
       <button onClick={handleStop}
-        className="mt-12 bg-transparent border border-[#D5D9D2] rounded-xl py-2.5 px-6 text-ink-soft text-[0.8rem] cursor-pointer">
+        className="mt-12 bg-transparent border border-rose-200 rounded-xl py-2.5 px-6 text-rose-500 text-[0.8rem] cursor-pointer">
         End session
       </button>
     </div>

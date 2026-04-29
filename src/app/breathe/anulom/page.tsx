@@ -79,15 +79,19 @@ export default function AnulomPage() {
             return;
           }
           if (s.narrationMode !== 'silent' && done % 3 === 0) cue('C2_09');
-        } else if (s.narrationMode !== 'silent') {
-          if (nextPhase === 'exhale-right') cue('C2_04');
-          else if (nextPhase === 'exhale-left') cue('C2_07');
-          else if (nextPhase === 'inhale-right') cue('C2_05');
-          else cue('C2_02');
         }
 
         s.nextPhase(nextPhase);
       } else {
+        // Pre-roll: cue for next phase 1 second before transition
+        if (s.phaseElapsed + 2 === dur && s.narrationMode !== 'silent') {
+          const preNextIdx = (cycleIdx + 1) % CYCLE.length;
+          const preNextPhase = CYCLE[preNextIdx];
+          if (preNextPhase === 'exhale-right') cue('C2_04');
+          else if (preNextPhase === 'exhale-left') cue('C2_07');
+          else if (preNextPhase === 'inhale-right') cue('C2_05');
+          else cue('C2_02');
+        }
         s.tickPhase();
       }
     }, 1000);
@@ -131,7 +135,7 @@ export default function AnulomPage() {
       </div>
 
       <button onClick={handleStop}
-        className="mt-12 bg-transparent border border-[#D5D9D2] rounded-xl py-2.5 px-6 text-ink-soft text-[0.8rem] cursor-pointer">
+        className="mt-12 bg-transparent border border-rose-200 rounded-xl py-2.5 px-6 text-rose-500 text-[0.8rem] cursor-pointer">
         End session
       </button>
     </div>
