@@ -49,40 +49,20 @@ export function introQueue(cfg: Cfg): ClipEntry[] {
 
 // ─── 2. Breathing-phase queue (played at start of each round's breathing) ─────
 
-const J1_POOL = ['J1_01','J1_02','J1_04','J1_05','J1_06','J1_07','J1_10'];
-const J1_ADV  = ['J1_08','J1_09'];
-
+// breathingQueue plays only the round intro + first breath cue.
+// Per-breath rhythm cues are intentionally omitted — they drift against the
+// 2-second breath interval because the queue runs on its own timeline.
+// The final "exhale and hold" cues (B3_01/B3_02) are fired directly from the
+// page component when the last breath completes, so they're always in sync.
 export function breathingQueue(round: number, cfg: Cfg): ClipEntry[] {
   if (silent(cfg)) return [];
-  const q: ClipEntry[] = [];
 
-  const roundId = `A4_${String(round).padStart(2,'0')}`;
-  q.push(add(roundId, 800), add('B1_06', 400));
-
-  // First 5 breath cues
-  q.push(add('B2_01', 0));
-  if (!minimal(cfg)) {
-    q.push(add('B2_02', 2000), add('B2_02', 2000), add('B2_02', 2000), add('B2_02', 2000));
-  }
-
-  // Every 10 breaths: count + physiology
-  const pool = [...J1_POOL, ...(cfg.sessionCount > 3 ? J1_ADV : [])];
-  const breathMilestones = [10, 20, 30, 40].filter(b => b < cfg.breathsPerRound);
-  for (const b of breathMilestones) {
-    const countId = `A2_${String(b).padStart(2,'0')}`;
-    q.push(add(countId, 1500));
-    if (!minimal(cfg)) {
-      q.push(add(pickFromPool(pool), 500));
-      if (b < cfg.breathsPerRound - 5) q.push(add('B2_05', 300));
-    }
-  }
-
-  // "Last few breaths" cue
-  q.push(add('B2_06', 2000));
-  q.push(add('B3_01', 3000)); // "Now... exhale fully... and hold."
-  q.push(add('B3_02', 400));
-
-  return q;
+  const roundId = `A4_${String(round).padStart(2, '0')}`;
+  return [
+    add(roundId, 800),   // "Round one / two / …"
+    add('B1_06', 400),   // "Let's begin. Follow my rhythm."
+    add('B2_01', 300),   // "Breathe in... let go."
+  ];
 }
 
 // ─── 3. Hold queue (cancelled by engine.stop() when user taps Release) ────────
@@ -91,26 +71,22 @@ const J2_POOL = ['J2_01','J2_02','J2_03','J2_05','J2_06','J2_07','J2_08','J2_09'
 const J2_ADV  = ['J2_04','J2_10','J2_11','J2_12'];
 const M3_POOL = ['M3_01','M3_02','M3_03','M3_04'];
 
-export function holdQueue(round: number, cfg: Cfg): ClipEntry[] {
+// A5 time callouts are NOT queued here — they are fired with audioEngine.playCallout()
+// via absolute setTimeout in the page, so they land at exact real-world elapsed times.
+export function holdQueue(_round: number, cfg: Cfg): ClipEntry[] {
   if (silent(cfg)) return [];
-  const q: ClipEntry[] = [];
-
-  // Patience clip immediately
-  q.push(add(pickFromPool(M3_POOL), 3000));
-
-  // Time callouts at 30s, 1m, 1m30, 2m, 3m
-  const timeMarkers: [number, string][] = [
-    [25000,'A5_01'], [30000,'A5_02'], [30000,'A5_03'], [30000,'A5_04'], [60000,'A5_06'],
-  ];
   const pool = [...J2_POOL, ...(cfg.sessionCount > 3 ? J2_ADV : [])];
 
-  for (const [delay, clipId] of timeMarkers) {
-    q.push(add(clipId, delay));
-    if (!minimal(cfg)) q.push(add(pickFromPool(pool), 1000));
+  const q: ClipEntry[] = [];
+  // Patience clip a few seconds in
+  q.push(add(pickFromPool(M3_POOL), 3000));
+  // Physiology clips — informational, no precise timing needed
+  if (!minimal(cfg)) {
+    q.push(add(pickFromPool(pool), 5000));
+    q.push(add(pickFromPool(pool), 40_000));
   }
-
-  // Permission to breathe (far out — user ends hold before this fires most of the time)
-  q.push(add('B3_06', 30000));
+  // Permission to breathe — fires very late; most users release before this
+  q.push(add('B3_06', 60_000));
   return q;
 }
 

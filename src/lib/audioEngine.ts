@@ -1,7 +1,7 @@
 'use client';
 
 import { getAudioMode } from './audioMode';
-import { speakAndWait, stopSpeech } from './speech';
+import { speakAndWait, speak, stopSpeech } from './speech';
 import { ambientEngine } from './ambientEngine';
 import type { AudioClip } from '@/data/audioClips';
 
@@ -62,6 +62,22 @@ class AudioEngine {
     this.current = null;
     stopSpeech();
     ambientEngine.unduck();
+  }
+
+  // Plays a single clip on an independent element — does NOT stop the main queue.
+  // Fire-and-forget; use for absolute-time callouts (e.g. "30 seconds" during hold).
+  playCallout(id: string): void {
+    import('@/data/audioClips').then(({ CLIPS }) => {
+      const clip = CLIPS[id];
+      if (!clip) return;
+      if (getAudioMode() === 'clips') {
+        const audio = this.preloaded.get(id) ?? new Audio(`/audio/${clip.file}`);
+        audio.currentTime = 0;
+        audio.play().catch(() => {});
+      } else {
+        speak(clip.text);
+      }
+    }).catch(() => {});
   }
 
   preload(ids: string[], clips: Record<string, AudioClip>): void {

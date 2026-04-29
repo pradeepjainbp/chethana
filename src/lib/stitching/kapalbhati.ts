@@ -8,7 +8,7 @@ export interface KapalbhatiConfig {
 }
 
 export function buildKapalbhatiQueue(cfg: KapalbhatiConfig): ClipEntry[] {
-  const { pumpsPerRound, rounds, sessionCount, narrationMode } = cfg;
+  const { rounds, sessionCount, narrationMode } = cfg;
   const isTeacher   = sessionCount <= 7;
   const isCompanion = sessionCount >= 29;
   const silent      = narrationMode === 'silent';
@@ -51,12 +51,9 @@ export function buildKapalbhatiQueue(cfg: KapalbhatiConfig): ClipEntry[] {
       add('E2_02', 800);  // "Huh, huh, huh, huh." — demonstrate
     }
 
-    // Mid-round cues based on pump count
-    const midPump = Math.floor(pumpsPerRound / 2);
-    // Schedule "faster now" and "slow down" by index (engine plays sequentially;
-    // pump timing is driven by the page's interval — we insert cue clips at logical points)
-    add('A6_02', midPump * 800);  // ~mid-round: "Stay with it."
-    if (!minimal && r === 1) add('E2_03', 1000);  // "Faster now."
+    // Mid-round encouragement is fired event-driven from the page (count === midPump),
+    // not queued here — queue timing drifts from the 800ms pump interval.
+    if (!minimal && r === 1) add('E2_03', 800);  // "Faster now." — early in round 1
 
     // Physiology during round 1 only (Teacher mode)
     if (!minimal && isTeacher && r === 1) add('K3_01', 2000);
@@ -65,7 +62,8 @@ export function buildKapalbhatiQueue(cfg: KapalbhatiConfig): ClipEntry[] {
 
     add('E2_04', 1000);   // "Slow down gently."
     add('E2_05', 500);    // "Stop. Take a deep breath in and hold."
-    add('A5_01', 15000);  // "Thirty seconds." — during retention
+    // A5_01 "Thirty seconds" is fired via audioEngine.playCallout() from the page
+    // at exactly 10s into the rest period — not queued here.
     add('E2_06', 3000);   // "Exhale slowly. Rest for a moment."
 
     if (r < rounds && !minimal) add('A6_01', 1000);  // "You're doing well."

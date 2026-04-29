@@ -60,31 +60,55 @@ export default function WimHofPage() {
     audioEngine.play(breathingQueue(store.round, phaseCfg()));
 
     breathRef.current = setInterval(() => {
-      const { breathCount, breathsPerRound } = useBreathingStore.getState();
+      const { breathCount, breathsPerRound, narrationMode } = useBreathingStore.getState();
       const nextCount = breathCount + 1;
       useBreathingStore.getState().tickBreath();
       if (nextCount >= breathsPerRound) {
         clearInterval(breathRef.current!);
         breathRef.current = null;
-        // breathingQueue already queued B3_01 ("exhale and hold") with a delay;
-        // we advance state after a pause so engine and visuals stay in sync
-        setTimeout(() => useBreathingStore.getState().startHold(), 4000);
+        // Stop the round-intro queue then fire "exhale and hold" exactly on the last breath
+        audioEngine.stop();
+        if (narrationMode !== 'silent') {
+          audioEngine.play([
+            { id: 'B3_01', delayMs: 300 },  // "Now... exhale fully... and hold."
+            { id: 'B3_02', delayMs: 400 },  // "Let all the air out. Don't breathe in."
+          ]);
+        }
+        setTimeout(() => useBreathingStore.getState().startHold(), 5000);
       }
     }, 2000);
 
     return () => { if (breathRef.current) clearInterval(breathRef.current); };
   }, [store.phase, store.round]); // eslint-disable-line
 
-  // Hold phase — play hold-phase audio queue (cancelled by audioEngine.stop() in handleEndHold)
+  // Hold phase — play hold queue + fire time callouts at exact elapsed ms
   useEffect(() => {
     if (store.phase !== 'hold') return;
     audioEngine.play(holdQueue(store.round, phaseCfg()));
+
+    // A5 callouts via independent channel — no queue drift
+    const CALLOUTS: [number, string][] = [
+      [30_000, 'A5_01'],
+      [60_000, 'A5_02'],
+      [90_000, 'A5_03'],
+      [120_000, 'A5_04'],
+      [180_000, 'A5_06'],
+    ];
+    const calloutTimers = CALLOUTS.map(([ms, id]) =>
+      setTimeout(() => {
+        if (useBreathingStore.getState().phase === 'hold') audioEngine.playCallout(id);
+      }, ms)
+    );
 
     // Auto-end hold at 3 minutes
     const auto = setTimeout(() => {
       if (useBreathingStore.getState().phase === 'hold') handleEndHold();
     }, 180_000);
-    return () => clearTimeout(auto);
+
+    return () => {
+      calloutTimers.forEach(clearTimeout);
+      clearTimeout(auto);
+    };
   }, [store.phase]); // eslint-disable-line
 
   // Recovery phase — play recovery queue then advance to next round or complete

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { useBreathingStore, type Technique, type NarrationMode } from '@/store/breathingStore';
 import { useSessionCount } from '@/hooks/useSessionCount';
 
@@ -182,6 +183,11 @@ export default function BreathePage() {
         className="w-full py-[15px] rounded-2xl border-none bg-sage text-white text-base font-semibold cursor-pointer shadow-[0_4px_16px_rgba(139,175,124,0.35)]">
         Begin →
       </button>
+
+      <Link href="/breathe/history"
+        className="block text-center text-[0.76rem] text-ink-soft mt-4 no-underline">
+        Session history →
+      </Link>
     </div>
   );
 }

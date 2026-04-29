@@ -16,7 +16,8 @@ const PUMP_INTERVAL_MS = 800; // ~75 pumps/min
 export default function KapalbhatiPage() {
   const router  = useRouter();
   const store   = useBreathingStore();
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const timerRef       = useRef<ReturnType<typeof setInterval> | null>(null);
+  const calloutTimerRef = useRef<ReturnType<typeof setTimeout>  | null>(null);
 
   const [phase,     setPhase]     = useState<KaPhase>('idle');
   const [pumpCount, setPumpCount] = useState(0);
@@ -35,7 +36,8 @@ export default function KapalbhatiPage() {
   }, []); // eslint-disable-line
 
   function startPumping(r: number) {
-    const nm = store.narrationMode;
+    const nm  = store.narrationMode;
+    const mid = Math.floor(pumps / 2);
     if (nm !== 'silent') cue('E2_01');
     setPhase('pumping');
     setPumpCount(0);
@@ -44,6 +46,8 @@ export default function KapalbhatiPage() {
       count++;
       setPumpCount(count);
       setPulse(p => !p);
+      // Mid-round encouragement fired at exact pump count midpoint
+      if (count === mid && nm !== 'silent') audioEngine.playCallout('A6_02');
       if (count >= pumps) {
         clearInterval(timerRef.current!);
         if (r < rounds) {
@@ -60,6 +64,11 @@ export default function KapalbhatiPage() {
   }
 
   function startRest(r: number) {
+    const nm = store.narrationMode;
+    // "Thirty seconds" callout at 10s into rest (restLeft will show 20)
+    if (nm !== 'silent') {
+      calloutTimerRef.current = setTimeout(() => audioEngine.playCallout('A5_01'), 10_000);
+    }
     let left = 30;
     setRestLeft(left);
     timerRef.current = setInterval(() => {
@@ -83,12 +92,16 @@ export default function KapalbhatiPage() {
   function handleStop() {
     audioEngine.stop();
     stopSpeech();
-    if (timerRef.current) clearInterval(timerRef.current);
+    if (timerRef.current)        clearInterval(timerRef.current);
+    if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
     setPhase('complete');
     store.completeSession();
   }
 
-  useEffect(() => () => { if (timerRef.current) clearInterval(timerRef.current); }, []);
+  useEffect(() => () => {
+    if (timerRef.current)        clearInterval(timerRef.current);
+    if (calloutTimerRef.current) clearTimeout(calloutTimerRef.current);
+  }, []);
 
   if (phase === 'complete') return <PostSession />;
 
